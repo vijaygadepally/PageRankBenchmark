@@ -2,7 +2,7 @@ from PageRankPipeline import *
 import numpy as np
 import matplotlib.pyplot as plt
 
-SCALE=range(15,16)
+SCALE=range(14,15)
 EdgesPerVertex=6
 Nfile=4
 Niter=20

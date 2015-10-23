@@ -94,6 +94,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
 
     edgelist=np.array([]).reshape(0,2)
 
+
     #Read into a single array
     for i in xrange (0,Nfile):
         fname= "data/K0/" + str(i) + ".tsv"
@@ -101,6 +102,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
         tmp = StrArrayRead(fname)
         edgelist = np.vstack((edgelist, tmp))
 
+        
     #Sort by start edge
     u,v = np.hsplit(edgelist,2)
     ind=np.argsort(np.transpose(u))
@@ -132,7 +134,8 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     print "Kernel 2: Read, Filter Edges"
     startTime=time.clock()
 
-    edgelist=np.array([]).reshape(0,2)
+    edgelist=np.array([]).reshape(0,2)        
+
     #Read into a single array
     for i in xrange (0,Nfile):
         fname= "data/K1/" + str(i) + ".tsv"
@@ -157,7 +160,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     dinv[np.isinf(dinv)]=0
     Dinv=np.reshape(np.repeat(dinv, Nmax), (Nmax,Nmax))
     A = np.dot(Dinv, A)
-
+    
     K2time=time.clock()-startTime
     print "K2time " + str(K2time) + ", Edges/sec: " + str( M/K2time )
 
@@ -174,6 +177,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     a=(np.ones(Nmax) * (1-c))/Nmax
 
     for i in xrange (0,Niter):
+        print "iteration: " + str(i)
         r= A* (r * c) + a
 
     K3time=time.clock()-startTime
