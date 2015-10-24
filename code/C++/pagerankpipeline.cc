@@ -12,6 +12,10 @@
 
 #include <sys/stat.h>
 
+FILE *data_file = NULL; // set to non-null to produce a data file suitable for gnuplot.
+
+
+
 static std::string dir_named(int kernel, int SCALE)  {
   return "data/K" + std::to_string(kernel) + "_S" + std::to_string(SCALE);
 }
@@ -112,6 +116,9 @@ void kernel0(const int SCALE, const int edges_per_vertex, const int n_files) {
          1e-6 * ((1u<<SCALE)*edges_per_vertex*n_files) / (end-start),
          bytes_written,
          1e-6 * bytes_written / (end-start));
+  if (data_file) {
+    fprintf(data_file, " %f\n", ((1u<<SCALE)*edges_per_vertex*n_files) / (end-start));
+  }
 }
 
 template <class T>
@@ -127,6 +134,9 @@ void kernel1(const int SCALE, const int edges_per_vertex, const int n_files) {
          SCALE, edges_per_vertex, 
          end-start,
          1e-6 * edges.size() / (end-start));
+  if (data_file) {
+    fprintf(data_file, " %f\n", edges.size() / (end-start));
+  }
 }
 
 template <class T>
@@ -258,6 +268,9 @@ void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr
          SCALE, edges_per_vertex, 
          end-start,
          1e-6 * edges.size() / (end-start));
+  if (data_file) {
+    fprintf(data_file, " %f\n", edges.size() / (end-start));
+  }
 }
 
 template <class T>
@@ -324,6 +337,9 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
          end-start,
          1e-6 * (1u<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start),
          2e-6 * (1u<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start));
+  if (data_file) {
+    fprintf(data_file, " %f\n", (1u<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start));
+  }
 }
 
 template <class T>
