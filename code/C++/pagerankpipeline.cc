@@ -21,6 +21,66 @@ static std::string file_named(int kernel, int SCALE, int filenum) {
   return dir_named(kernel, SCALE) + "/" + std::to_string(filenum) + ".tsv";
 }
 
+template <class T>
+T parse_int(char *str, char **end) {
+  uint64_t r = 0;
+  while (1) {
+    char c = *str;
+    if (c >= '0' && c <= '9') {
+      r = r*10 + c - '0';
+      str++;
+    } else {
+      *end = str;
+      return r;
+    }
+  }
+}
+
+template <class T>
+void read_files(int kernel, int SCALE, int edges_per_vertex, int n_files, 
+                std::vector<std::tuple<T, T>> *edges) {
+  const uint64_t M_per_file = (1u<<SCALE) * edges_per_vertex;
+  const uint64_t M = M_per_file * n_files;
+  edges->reserve(M);
+  for (int i = 0; i < n_files; i++) {
+    FILE *f = fopen(file_named(kernel, SCALE, i).c_str(), "r");
+    assert(f);
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t n_read;
+    while ((n_read = getline(&line, &len, f)) != -1) {
+      char *tab;
+      T v1 = parse_int<T>(line, &tab);
+      assert(tab[0] == '\t');
+      char *nl;
+      T v2 = parse_int<T>(tab+1, &nl);
+      assert(nl[0] == '\n');
+      assert(nl[1] == 0);
+      edges->push_back(std::tuple<T,T>(v1, v2));
+    }
+    if (line) free(line);
+    fclose(f);
+  }
+  assert(edges->size() == M);
+}
+
+
+template <class T>
+void write_files(int kernel, int SCALE, int edges_per_vertex, int n_files, 
+                 const std::vector<std::tuple<T, T>> &edges) {
+  const uint64_t M_per_file = (1u<<SCALE) * edges_per_vertex;
+  auto it = edges.begin();
+  mkdir(dir_named(1, SCALE).c_str(), 0777);
+  for (int i = 0; i < n_files; i++) {
+    std::ofstream f(file_named(kernel, SCALE, i), std::ios::out);
+    for (T j = 0; j < M_per_file; j++) {
+      f << std::get<0>(*it) << '\t' << std::get<1>(*it) << '\n';
+      it++;
+    }
+  }
+  assert(it == edges.end());
+
+}
 
 template <class T>
 void kernel0(int SCALE, int edges_per_vertex, int n_files) {
@@ -55,68 +115,54 @@ void kernel0(int SCALE, int edges_per_vertex, int n_files) {
 }
 
 template <class T>
-T parse_int(char *str, char **end) {
-  uint64_t r = 0;
-  while (1) {
-    char c = *str;
-    if (c >= '0' && c <= '9') {
-      r = r*10 + c - '0';
-      str++;
-    } else {
-      *end = str;
-      return r;
-    }
-  }
-}
-template <class T>
 void kernel1(int SCALE, int edges_per_vertex, int n_files) {
   fasttime_t start = gettime();
   // Sort the data
   std::vector<std::tuple<T, T>> edges;
-  const uint64_t M_per_file = (1u<<SCALE) * edges_per_vertex;
-  const uint64_t M = M_per_file * n_files;
-  edges.reserve(M);
-  for (int i = 0; i < n_files; i++) {
-    FILE *f = fopen(file_named(0, SCALE, i).c_str(), "r");
-    assert(f);
-    char *line = NULL;
-    size_t len = 0;
-    ssize_t n_read;
-    while ((n_read = getline(&line, &len, f)) != -1) {
-      char *tab;
-      T v1 = parse_int<T>(line, &tab);
-      assert(tab[0] == '\t');
-      char *nl;
-      T v2 = parse_int<T>(tab+1, &nl);
-      assert(nl[0] == '\n');
-      assert(nl[1] == 0);
-      edges.push_back(std::tuple<T,T>(v1, v2));
-    }
-    if (line) free(line);
-    fclose(f);
-  }
-  assert(edges.size() == M);
+  read_files<T>(0, SCALE, edges_per_vertex, n_files, &edges);
   std::sort(edges.begin(), edges.end());
-  auto it = edges.begin();
-  mkdir(dir_named(1, SCALE).c_str(), 0777);
-  for (int i = 0; i < n_files; i++) {
-    std::ofstream f(file_named(1, SCALE, i), std::ios::out);
-    for (T j = 0; j < M_per_file; j++) {
-      f << std::get<0>(*it) << '\t' << std::get<1>(*it) << '\n';
-      it++;
-    }
-  }
-  assert(it == edges.end());
+  write_files<T>(1, SCALE, edges_per_vertex, n_files, edges);
   fasttime_t end   = gettime();
   printf("scale=%2d Edgefactor=%2d K1time: %9.3fs Medges/sec: %7.2f\n", 
          SCALE, edges_per_vertex, 
          end-start,
-         1e-6 * M / (end-start));
+         1e-6 * edges.size() / (end-start));
 }
+
+template <class T>
+void kernel2(int SCALE, int edges_per_vertex, int n_files) {
+  fasttime_t start = gettime();
+  std::vector<std::tuple<T, T>> edges;
+  read_files<T>(1, SCALE, edges_per_vertex, n_files, &edges);
+
+  // Remove duplicates
+  std::vector<std::tuple<T, T, double>> matrix;
+  matrix.reserve(edges.size());
+  auto &prev = edges[0];
+  double count = 1;
+  for (size_t i = 1; i < edges.size(); i++) {
+    if (prev == edges[i]) {
+      count++;
+    } else {
+      matrix.push_back(std::tuple<T, T, double>(std::get<0>(prev), std::get<1>(prev), count));
+      prev = edges[i];
+      count = 1;
+    }
+  }
+  matrix.push_back(std::tuple<T, T, double>(std::get<0>(prev), std::get<1>(prev), count));
+
+  fasttime_t end   = gettime();
+  printf("scale=%2d Edgefactor=%2d K2time: %9.3fs Medges/sec: %7.2f\n", 
+         SCALE, edges_per_vertex, 
+         end-start,
+         1e-6 * edges.size() / (end-start));
+}
+
 template <class T>
 void pagerankpipeline(int SCALE, int edges_per_vertex, int n_files) {
   kernel0<T>(SCALE, edges_per_vertex, n_files);
   kernel1<T>(SCALE, edges_per_vertex, n_files);
+  kernel2<T>(SCALE, edges_per_vertex, n_files);
 }
 
 template void pagerankpipeline<uint32_t>(int SCALE, int edges_per_vertex, int n_files);
