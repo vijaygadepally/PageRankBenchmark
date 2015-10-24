@@ -59,3 +59,8 @@ python runPageRankPipeline.py
 
 2.6 C++
 
+ $ cd C++
+ $ make
+        (or "make CXX=icc" if you have the Intel compiler installed)
+ $ ./runpagerankpipeline
+ 
