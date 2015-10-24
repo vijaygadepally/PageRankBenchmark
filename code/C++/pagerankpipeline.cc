@@ -43,7 +43,7 @@ T parse_int(char *str, char **end) {
 template <class T>
 void read_files(int kernel, int SCALE, int edges_per_vertex, int n_files, 
                 std::vector<std::tuple<T, T>> *edges) {
-  const uint64_t M_per_file = (1u<<SCALE) * edges_per_vertex;
+  const uint64_t M_per_file = (1ul<<SCALE) * edges_per_vertex;
   const uint64_t M = M_per_file * n_files;
   edges->reserve(M);
   for (int i = 0; i < n_files; i++) {
@@ -72,7 +72,7 @@ void read_files(int kernel, int SCALE, int edges_per_vertex, int n_files,
 template <class T>
 void write_files(const int kernel, const int SCALE, const int edges_per_vertex, const int n_files, 
                  const std::vector<std::tuple<T, T>> &edges) {
-  const uint64_t M_per_file = (1u<<SCALE) * edges_per_vertex;
+  const uint64_t M_per_file = (1ul<<SCALE) * edges_per_vertex;
   auto it = edges.begin();
   mkdir(dir_named(1, SCALE).c_str(), 0777);
   for (int i = 0; i < n_files; i++) {
@@ -113,11 +113,11 @@ void kernel0(const int SCALE, const int edges_per_vertex, const int n_files) {
   printf("Scale=%2d Edgefactor=%2d K0time: %9.3fs Medges/sec: %7.2f  bytes:%12ld Mbytes/sec: %6.2f\n", 
          SCALE, edges_per_vertex,
          end-start,
-         1e-6 * ((1u<<SCALE)*edges_per_vertex*n_files) / (end-start),
+         1e-6 * ((1ul<<SCALE)*edges_per_vertex*n_files) / (end-start),
          bytes_written,
          1e-6 * bytes_written / (end-start));
   if (data_file) {
-    fprintf(data_file, " %f\n", ((1u<<SCALE)*edges_per_vertex*n_files) / (end-start));
+    fprintf(data_file, "%d %ld %g", SCALE, (1ul<<SCALE)*edges_per_vertex, ((1ul<<SCALE)*edges_per_vertex*n_files) / (end-start));
   }
 }
 
@@ -135,7 +135,7 @@ void kernel1(const int SCALE, const int edges_per_vertex, const int n_files) {
          end-start,
          1e-6 * edges.size() / (end-start));
   if (data_file) {
-    fprintf(data_file, " %f\n", edges.size() / (end-start));
+    fprintf(data_file, " %g", edges.size() / (end-start));
   }
 }
 
@@ -149,7 +149,7 @@ struct csr_matrix {
 template <class T>
 void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr_matrix<T> *result) {
   fasttime_t start = gettime();
-  const size_t N = (1u<<SCALE);
+  const size_t N = (1ul<<SCALE);
   std::vector<std::tuple<T, T>> edges;
   read_files<T>(1, SCALE, edges_per_vertex, n_files, &edges);
 
@@ -269,14 +269,14 @@ void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr
          end-start,
          1e-6 * edges.size() / (end-start));
   if (data_file) {
-    fprintf(data_file, " %f\n", edges.size() / (end-start));
+    fprintf(data_file, " %g", edges.size() / (end-start));
   }
 }
 
 template <class T>
 void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M) {
 
-  const size_t N = (1u<<SCALE);
+  const size_t N = (1ul<<SCALE);
   std::vector<double> r;
   r.reserve(N);
   uint64_t sum = 0;
@@ -335,10 +335,10 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
   printf("scale=%2d Edgefactor=%2d K3time: %9.3fs Medges/sec: %7.2f  MLFLOPS: %7.2f\n", 
          SCALE, edges_per_vertex, 
          end-start,
-         1e-6 * (1u<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start),
-         2e-6 * (1u<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start));
+         1e-6 * (1ul<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start),
+         2e-6 * (1ul<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start));
   if (data_file) {
-    fprintf(data_file, " %f\n", (1u<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start));
+    fprintf(data_file, " %g\n", (1ul<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start));
   }
 }
 
