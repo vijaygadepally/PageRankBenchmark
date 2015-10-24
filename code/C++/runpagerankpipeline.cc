@@ -46,8 +46,8 @@ int main(int argc, char *argv[] __attribute__((unused))) {
     printf("Too many arguments\n");
     usage();
   }
-  const int edges_per_vertex = 6;
-  const int nfile = 4;
+  const int edges_per_vertex = 2;
+  const int nfile = 1;
   for (int scale = min_scale; scale <= max_scale; scale++) {
     pagerankpipeline<uint32_t>(scale, edges_per_vertex, nfile);
   }

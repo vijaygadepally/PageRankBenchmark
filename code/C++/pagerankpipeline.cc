@@ -130,8 +130,16 @@ void kernel1(int SCALE, int edges_per_vertex, int n_files) {
 }
 
 template <class T>
-void kernel2(int SCALE, int edges_per_vertex, int n_files) {
+struct csr_matrix {
+  std::vector<T> row_starts;
+  std::vector<T> cols;
+  std::vector<double> vals;
+};
+
+template <class T>
+void kernel2(int SCALE, int edges_per_vertex, int n_files, csr_matrix<T> *result) {
   fasttime_t start = gettime();
+  const size_t N = (1u<<SCALE);
   std::vector<std::tuple<T, T>> edges;
   read_files<T>(1, SCALE, edges_per_vertex, n_files, &edges);
 
@@ -141,19 +149,19 @@ void kernel2(int SCALE, int edges_per_vertex, int n_files) {
   matrix.reserve(edges.size());
   {
     auto &prev = edges[0];
-    double count = 1;
+    T count = 1;
     for (size_t i = 1; i < edges.size(); i++) {
       if (prev == edges[i]) {
         count++;
       } else {
         // store column then row (the matrix is transposed)
-        matrix.push_back(std::tuple<T, T, double>(std::get<1>(prev), std::get<0>(prev), count));
+        matrix.push_back(std::tuple<T, T, T>(std::get<1>(prev), std::get<0>(prev), count));
         prev = edges[i];
         count = 1;
       }
     }
     // store column then row (the matri is transposed)
-    matrix.push_back(std::tuple<T, T, double>(std::get<1>(prev), std::get<0>(prev), count));
+    matrix.push_back(std::tuple<T, T, T>(std::get<1>(prev), std::get<0>(prev), count));
   }
 
   // Remove the supernodes and leaves.  The in-degree is the number of nonzeros in a column.
@@ -161,65 +169,84 @@ void kernel2(int SCALE, int edges_per_vertex, int n_files) {
   // Since we stored columns we can sort it.
   std::sort(matrix.begin(), matrix.end());
 
-  // Find the maximum column
-  size_t max_col_count = std::numeric_limits<size_t>::max();
   {
-    T      prev_col = std::get<0>(matrix[0]);
-    size_t prev = 0;
-    for (size_t i = 1; i < matrix.size(); i++) {
-      // if it's the same column we keep going
-      if (std::get<0>(matrix[i]) == prev_col) {
-        continue;
-      } else {
-        // it's a new column
-        size_t n_in_col = i - prev;
-        if (n_in_col > max_col_count) {
-          max_col_count = n_in_col;
-        }
-        prev = i;
-      }
+    std::vector<T> col_counts(N, 0);
+    for (const auto &e : matrix) {
+      col_counts[ std::get<0>(e) ] += std::get<2>(e);
     }
-    size_t n_in_col = matrix.size() - prev;
-    if (n_in_col > max_col_count) {
-      max_col_count = n_in_col;
+    printf("col counts =");
+    for (const auto &c : col_counts) {
+      printf(" %d", c);
     }
-  }
-  
-  // Untranpose the matrix
-  {
-    size_t write_here = 0;
-    T      prev_col = std::get<0>(matrix[0]);
-    size_t prev = 0;
-    for (size_t i = 1; i < matrix.size(); i++) {
-      // If it's the same column we keep going
-      if (std::get<0>(matrix[i]) == prev_col) {
-        continue;
-      } else {
-        // it's a new column
-        size_t n_in_col = i - prev;
-        if (n_in_col != 1 && n_in_col != max_col_count) {
-          // copy the column to the new matrix.
-          while (prev < i) {
-            const auto &e = matrix[prev];
-            matrix[write_here++] = std::tuple<T,T,double>(std::get<1>(e), std::get<0>(e), std::get<2>(e));
-            prev++;
-          }
-          prev = i;
-        }
-      }
+    printf("\n");
+    T max_col_count = *std::max_element(col_counts.begin(), col_counts.end());
+    printf("Max col count = %d\n", max_col_count);
+
+    std::vector<double> col_inverses(N, 0);
+    for (size_t i = 0; i < N; i++) {
+      if (col_counts[i] != 0) col_inverses[i] = 1/(double)(col_counts[i]);
     }
-    size_t n_in_col = matrix.size() - prev;
-    if (n_in_col != 1 && n_in_col != max_col_count) {
-      // copy the column to the new matrix.
-      while (prev < matrix.size()) {
-        const auto &e = matrix[prev];
-        matrix[write_here++] = std::tuple<T,T,double>(std::get<1>(e), std::get<0>(e), std::get<2>(e));
-        prev++;
-      }
+
+    // Untranpose the matrix and remove the supernode and leaves.
+    size_t new_size = 0;
+    for (const auto &e : matrix) {
+      const T &col = std::get<0>(e);
+      const T &row = std::get<1>(e);
+      const double &val = std::get<2>(e);
+      const T col_count = col_counts[col];
+      if (col_count == 1 || col_count == max_col_count) continue;
+      matrix[new_size++] = std::tuple<T,T,double>(row, col, val*col_inverses[col]);
     }
-    matrix.resize(write_here);
+    matrix.resize(new_size);
+    matrix.shrink_to_fit();
   }
 
+  // Put it in row-major order.
+  std::sort(matrix.begin(), matrix.end());
+  for (const auto &e : matrix) {
+    printf(" (%d %d %f)", std::get<0>(e), std::get<1>(e), std::get<2>(e));
+  }
+  printf("\n");
+
+  // Construct the csr matrix.
+  auto &row_starts = result->row_starts;
+  auto &cols       = result->cols;
+  auto &vals       = result->vals;
+  row_starts.reserve(N + 1);
+  cols.reserve(matrix.size());
+  vals.reserve(matrix.size());
+  for (const auto & e : matrix) {
+    const T &row = std::get<0>(e);
+    const T &col = std::get<1>(e);
+    const double &val = std::get<2>(e);
+    while (row_starts.size() <= static_cast<size_t>(row)) {
+      row_starts.push_back(cols.size());
+    }
+    cols.push_back(col);
+    vals.push_back(val);
+  }
+  printf("\n");
+  while (row_starts.size() < N+1) {
+    row_starts.push_back(cols.size());
+  }
+  if (0)
+  for (size_t row = 0; row < N; row++) {
+    double sum = 0;
+    for (size_t i = row_starts[row]; i < row_starts[row+1]; i++) {
+      sum += vals[i];
+    }
+    double inv = 1/sum;
+    for (size_t i = row_starts[row]; i < row_starts[row+1]; i++) {
+      vals[i] *= inv;
+    }
+  }
+  printf("row_starts:");
+  for (auto &rs : row_starts) { printf(" %d", rs); }
+  printf("\ncols: ");
+  for (auto &cs : cols) { printf(" %4d", cs); }
+  printf("\nvals: ");
+  for (auto &vs : vals) { printf(" %3.3f", vs); }
+  printf("\n");
 
   fasttime_t end   = gettime();
   printf("scale=%2d Edgefactor=%2d K2time: %9.3fs Medges/sec: %7.2f\n", 
@@ -232,7 +259,8 @@ template <class T>
 void pagerankpipeline(int SCALE, int edges_per_vertex, int n_files) {
   kernel0<T>(SCALE, edges_per_vertex, n_files);
   kernel1<T>(SCALE, edges_per_vertex, n_files);
-  kernel2<T>(SCALE, edges_per_vertex, n_files);
+  csr_matrix<T> M;
+  kernel2<T>(SCALE, edges_per_vertex, n_files, &M);
 }
 
 template void pagerankpipeline<uint32_t>(int SCALE, int edges_per_vertex, int n_files);
