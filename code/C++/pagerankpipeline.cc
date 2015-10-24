@@ -144,12 +144,18 @@ void kernel2(int SCALE, int edges_per_vertex, int n_files) {
     if (prev == edges[i]) {
       count++;
     } else {
-      matrix.push_back(std::tuple<T, T, double>(std::get<0>(prev), std::get<1>(prev), count));
+      matrix.push_back(std::tuple<T, T, double>(std::get<1>(prev), std::get<0>(prev), count));
       prev = edges[i];
       count = 1;
     }
   }
-  matrix.push_back(std::tuple<T, T, double>(std::get<0>(prev), std::get<1>(prev), count));
+  // store column then row
+  matrix.push_back(std::tuple<T, T, double>(std::get<1>(prev), std::get<0>(prev), count));
+
+  // Remove the supernodes and leaves.  The in-degree is the number of nonzeros in a column.
+  // Get rid of the column(s) with the most entries  and the columns with exactly one entry.
+  // Since we stored columns we can sort it.
+  std::sort(matrix.begin(), matrix.end());
 
   fasttime_t end   = gettime();
   printf("scale=%2d Edgefactor=%2d K2time: %9.3fs Medges/sec: %7.2f\n", 
