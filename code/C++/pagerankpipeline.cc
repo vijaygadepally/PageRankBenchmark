@@ -135,27 +135,91 @@ void kernel2(int SCALE, int edges_per_vertex, int n_files) {
   std::vector<std::tuple<T, T>> edges;
   read_files<T>(1, SCALE, edges_per_vertex, n_files, &edges);
 
-  // Remove duplicates
-  std::vector<std::tuple<T, T, double>> matrix;
-  matrix.reserve(edges.size());
-  auto &prev = edges[0];
-  double count = 1;
-  for (size_t i = 1; i < edges.size(); i++) {
-    if (prev == edges[i]) {
-      count++;
-    } else {
-      matrix.push_back(std::tuple<T, T, double>(std::get<1>(prev), std::get<0>(prev), count));
-      prev = edges[i];
-      count = 1;
+  // Remove duplicates and construct a matrix.
+  // Construct the transposed matrix to make it easy to remove the supernode and leaves.
+  std::vector<std::tuple<T, T, double>> matrix_transposed;
+  matrix_transposed.reserve(edges.size());
+  {
+    auto &prev = edges[0];
+    double count = 1;
+    for (size_t i = 1; i < edges.size(); i++) {
+      if (prev == edges[i]) {
+        count++;
+      } else {
+        // store column then row (the matrix is transposed)
+        matrix_transposed.push_back(std::tuple<T, T, double>(std::get<1>(prev), std::get<0>(prev), count));
+        prev = edges[i];
+        count = 1;
+      }
     }
+    // store column then row (the matri is transposed)
+    matrix_transposed.push_back(std::tuple<T, T, double>(std::get<1>(prev), std::get<0>(prev), count));
   }
-  // store column then row
-  matrix.push_back(std::tuple<T, T, double>(std::get<1>(prev), std::get<0>(prev), count));
 
   // Remove the supernodes and leaves.  The in-degree is the number of nonzeros in a column.
   // Get rid of the column(s) with the most entries  and the columns with exactly one entry.
   // Since we stored columns we can sort it.
-  std::sort(matrix.begin(), matrix.end());
+  std::sort(matrix_transposed.begin(), matrix_transposed.end());
+
+  // Find the maximum column
+  size_t max_col_count = std::numeric_limits<size_t>::max();
+  {
+    T      prev_col = std::get<0>(matrix_transposed[0]);
+    size_t prev = 0;
+    for (size_t i = 1; i < matrix_transposed.size(); i++) {
+      // if it's the same column we keep going
+      if (std::get<0>(matrix_transposed[i]) == prev_col) {
+        continue;
+      } else {
+        // it's a new column
+        size_t n_in_col = i - prev;
+        if (n_in_col > max_col_count) {
+          max_col_count = n_in_col;
+        }
+        prev = i;
+      }
+    }
+    size_t n_in_col = matrix_transposed.size() - prev;
+    if (n_in_col > max_col_count) {
+      max_col_count = n_in_col;
+    }
+  }
+  
+  // Create an untranposed matrix
+  std::vector<std::tuple<T, T, double>> matrix;
+  matrix.reserve(matrix_transposed.size());
+  {
+    T      prev_col = std::get<0>(matrix_transposed[0]);
+    size_t prev = 0;
+    for (size_t i = 1; i < matrix_transposed.size(); i++) {
+      // If it's the same column we keep going
+      if (std::get<0>(matrix_transposed[i]) == prev_col) {
+        continue;
+      } else {
+        // it's a new column
+        size_t n_in_col = i - prev;
+        if (n_in_col != 1 && n_in_col != max_col_count) {
+          // copy the column to the new matrix.
+          while (prev < i) {
+            const auto &e = matrix_transposed[prev];
+            matrix.push_back(std::tuple<T,T,double>(std::get<1>(e), std::get<0>(e), std::get<2>(e)));
+            prev++;
+          }
+          prev = i;
+        }
+      }
+    }
+    size_t n_in_col = matrix_transposed.size() - prev;
+    if (n_in_col != 1 && n_in_col != max_col_count) {
+      // copy the column to the new matrix.
+      while (prev < matrix_transposed.size()) {
+        const auto &e = matrix_transposed[prev];
+        matrix.push_back(std::tuple<T,T,double>(std::get<1>(e), std::get<0>(e), std::get<2>(e)));
+        prev++;
+      }
+    }
+  }
+  matrix_transposed.resize(0); // release the storage.
 
   fasttime_t end   = gettime();
   printf("scale=%2d Edgefactor=%2d K2time: %9.3fs Medges/sec: %7.2f\n", 
