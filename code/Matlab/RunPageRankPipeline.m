@@ -1,6 +1,5 @@
 
-%SCALE = [10:22];                                 % Scale of problem.
-SCALE = [10:16];                                 % Scale of problem.
+SCALE = [10:22];                                 % Scale of problem.
 EdgesPerVertex = 16;                             % Average degree of each vertex (power of 2).
 Nfile = 4;                                       % Number of files to use (any power of 2).
 Niter = 20;                                      % Number of PageRank iterations.
