@@ -40,7 +40,6 @@ def KronGraph500NoPerm (SCALE, EdgesPerVertex):
     ab=A+B
     c_norm=C/(1-(A+B))
     a_norm=A/(A+B)
-    inum=0
 
     for ib in range (0,SCALE):
         ii_num=np.random.uniform(0,1,M)
@@ -57,9 +56,11 @@ def KronGraph500NoPerm (SCALE, EdgesPerVertex):
 ###################################################
 def StrArrayWrite(nparray, filename):
 
-    fo=open(filename, "w")
-    nparray.tofile(fo, sep="\t", format="%s")
-    fo.close
+    np.savetxt(filename, nparray, fmt='%16d', delimiter='\t', newline='\n')
+
+    # fo=open(filename, "w")
+    # nparray.tofile(fo, sep="\t", format="%s")
+    # fo.close
 
 ###################################################
 ###################################################
@@ -74,7 +75,6 @@ def StrArrayRead(filename):
         for line in f:
             edgelist.append(list(map(float, line.split('\t'))))
     return np.asarray(edgelist)
-
 
 ###################################################
 ###################################################
@@ -115,7 +115,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     print "Kernel 1: Read, Sort, Write Edges"
     startTime=time.clock()
 
-    edgelist=np.empty((1,0))
+    edgelist=np.empty((0,2))
     #edgelist=np.array([])
 
     #Read into a single array
@@ -123,10 +123,8 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
         fname= "data/K0/" + str(i) + ".tsv"
         print "   Reading:" + fname
         tmp = StrArrayRead(fname)
-        edgelist=np.concatenate((edgelist,tmp),axis=1)
+        edgelist=np.concatenate((edgelist,tmp),axis=0)
         #edgelist = np.hstack((edgelist, tmp))
-
-    edgelist=edgelist.reshape((Nmax*EdgesPerVertex,2))
 
     #Sort by start edge
     u,v = np.hsplit(edgelist,2)
@@ -160,16 +158,15 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     startTime=time.clock()
 
     #edgelist=np.array([])
-    edgelist=np.empty((1,0))
+    edgelist=np.empty((0,2))
+
     #Read into a single array
     for i in xrange (0,Nfile):
         fname= "data/K1/" + str(i) + ".tsv"
         print "   Reading:" + fname
         tmp = StrArrayRead(fname)
-        edgelist=np.concatenate((edgelist,tmp),axis=1)
+        edgelist=np.concatenate((edgelist,tmp),axis=0)
         #edgelist = np.hstack((edgelist, tmp))
-
-    edgelist=edgelist.reshape((Nmax*EdgesPerVertex,2))
 
     #Construct adjacency matrix
     u,v = np.hsplit(edgelist,2)
@@ -178,23 +175,22 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     vt=np.squeeze(v)
     dt=np.squeeze(d)
 
-    A=csr_matrix((dt, (ut,vt)), shape=(Nmax, Nmax)).toarray()
+    A=csr_matrix((dt, (ut,vt)), shape=(Nmax, Nmax))
 
-    #print "sparsity: " + str(np.count_nonzero(A)) + ' ' + str(Nmax)
     #Filter and weight data
     din = A.sum(axis=0)
-    A[:,din==max(din)]=0
-    A[:,din==1]=0
-    dout = A.sum(axis=1)
-    #dout =sum(np.transpose(A))
-    dinv=1/dout
+    A[:,np.ravel(din==np.max(din))]=0 #A[:,din==max(din)]=0
+    A[:,np.ravel(din==1)]=0 #A[:,din==1]=0
+    dout = A.sum(axis=1) #dout =sum(np.transpose(A))
+    dinv=np.squeeze(np.asarray(1/dout))
     dinv[np.isinf(dinv)]=0
-    Dinv=np.diag(dinv, 0)
-    A = A*Dinv
+    dind=np.asarray(np.where(dinv>0))
+    dval=dinv[dinv>0]
 
-    #Dinv.setdiag(dinv)
-    #Dinv=np.reshape(np.repeat(dinv, Nmax), (Nmax,Nmax))
-    #A = np.dot(Dinv, A)
+    D=csr_matrix((dval, (np.squeeze(dind),np.squeeze(dind))), shape=(Nmax,Nmax))
+    #Dinv=np.diag(dinv, 0)
+
+    A = A.dot(D)
 
     K2time=time.clock()-startTime
     print "K2time " + str(K2time) + ", Edges/sec: " + str( M/K2time )
@@ -208,15 +204,16 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     print "Kernel 3: Compute PageRank."
     startTime=time.clock()
 
-    r=np.random.uniform(0,1,Nmax)
+    r=np.random.uniform(0,1,(Nmax,1))
     r=r/la.norm(r)
 
-    a=(np.ones(Nmax) * (1-c))/Nmax
+    a=(np.ones((Nmax,1)) * (1-c))/Nmax
 
     for i in xrange (0,Niter):
-        r = A*(r*c) + a
+        r = A.dot(r)*c + a
 
     K3time=time.clock()-startTime
+    print "Pagerank Sum= " + str(r.sum(axis=0))
     print "K3time " + str(K3time) + ", Edges/sec: " + str( M/K3time )
 
     return K0time, K1time, K2time, K3time;
