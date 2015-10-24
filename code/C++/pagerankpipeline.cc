@@ -174,13 +174,15 @@ void kernel2(int SCALE, int edges_per_vertex, int n_files, csr_matrix<T> *result
     for (const auto &e : matrix) {
       col_counts[ std::get<0>(e) ] += std::get<2>(e);
     }
-    printf("col counts =");
-    for (const auto &c : col_counts) {
-      printf(" %d", c);
+    if (0) {
+      printf("col counts =");
+      for (const auto &c : col_counts) {
+        printf(" %d", c);
+      }
+      printf("\n");
     }
-    printf("\n");
     T max_col_count = *std::max_element(col_counts.begin(), col_counts.end());
-    printf("Max col count = %d\n", max_col_count);
+    //printf("Max col count = %d\n", max_col_count);
 
     std::vector<double> col_inverses(N, 0);
     for (size_t i = 0; i < N; i++) {
@@ -203,10 +205,12 @@ void kernel2(int SCALE, int edges_per_vertex, int n_files, csr_matrix<T> *result
 
   // Put it in row-major order.
   std::sort(matrix.begin(), matrix.end());
-  for (const auto &e : matrix) {
-    printf(" (%d %d %f)", std::get<0>(e), std::get<1>(e), std::get<2>(e));
+  if (0) {
+    for (const auto &e : matrix) {
+      printf(" (%d %d %f)", std::get<0>(e), std::get<1>(e), std::get<2>(e));
+    }
+    printf("\n");
   }
-  printf("\n");
 
   // Construct the csr matrix.
   auto &row_starts = result->row_starts;
@@ -225,7 +229,6 @@ void kernel2(int SCALE, int edges_per_vertex, int n_files, csr_matrix<T> *result
     cols.push_back(col);
     vals.push_back(val);
   }
-  printf("\n");
   while (row_starts.size() < N+1) {
     row_starts.push_back(cols.size());
   }
@@ -240,13 +243,15 @@ void kernel2(int SCALE, int edges_per_vertex, int n_files, csr_matrix<T> *result
       vals[i] *= inv;
     }
   }
-  printf("row_starts:");
-  for (auto &rs : row_starts) { printf(" %d", rs); }
-  printf("\ncols: ");
-  for (auto &cs : cols) { printf(" %4d", cs); }
-  printf("\nvals: ");
-  for (auto &vs : vals) { printf(" %3.3f", vs); }
-  printf("\n");
+  if (0) {
+    printf("row_starts:");
+    for (auto &rs : row_starts) { printf(" %d", rs); }
+    printf("\ncols: ");
+    for (auto &cs : cols) { printf(" %4d", cs); }
+    printf("\nvals: ");
+    for (auto &vs : vals) { printf(" %3.3f", vs); }
+    printf("\n");
+  }
 
   fasttime_t end   = gettime();
   printf("scale=%2d Edgefactor=%2d K2time: %9.3fs Medges/sec: %7.2f\n", 
