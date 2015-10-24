@@ -279,11 +279,13 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
     fsum += e;
   }
 
-  printf("r = ");
-  for (auto & e : r) {
-    printf(" %f", e);
+  if (0) {
+    printf("r = ");
+    for (auto & e : r) {
+      printf(" %f", e);
+    }
+    printf("\n");
   }
-  printf("\n");
 
   // Now do the page rank.
   int page_rank_iteration_count = 20;
