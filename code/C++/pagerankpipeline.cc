@@ -66,7 +66,7 @@ void read_files(int kernel, int SCALE, int edges_per_vertex, int n_files,
 
 
 template <class T>
-void write_files(int kernel, int SCALE, int edges_per_vertex, int n_files, 
+void write_files(const int kernel, const int SCALE, const int edges_per_vertex, const int n_files, 
                  const std::vector<std::tuple<T, T>> &edges) {
   const uint64_t M_per_file = (1u<<SCALE) * edges_per_vertex;
   auto it = edges.begin();
@@ -83,7 +83,7 @@ void write_files(int kernel, int SCALE, int edges_per_vertex, int n_files,
 }
 
 template <class T>
-void kernel0(int SCALE, int edges_per_vertex, int n_files) {
+void kernel0(const int SCALE, const int edges_per_vertex, const int n_files) {
   fasttime_t start = gettime();
   mkdir("data", 0777);
   for (int i = 0; i < n_files; i++) {
@@ -115,7 +115,7 @@ void kernel0(int SCALE, int edges_per_vertex, int n_files) {
 }
 
 template <class T>
-void kernel1(int SCALE, int edges_per_vertex, int n_files) {
+void kernel1(const int SCALE, const int edges_per_vertex, const int n_files) {
   fasttime_t start = gettime();
   // Sort the data
   std::vector<std::tuple<T, T>> edges;
@@ -137,7 +137,7 @@ struct csr_matrix {
 };
 
 template <class T>
-void kernel2(int SCALE, int edges_per_vertex, int n_files, csr_matrix<T> *result) {
+void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr_matrix<T> *result) {
   fasttime_t start = gettime();
   const size_t N = (1u<<SCALE);
   std::vector<std::tuple<T, T>> edges;
@@ -261,11 +261,37 @@ void kernel2(int SCALE, int edges_per_vertex, int n_files, csr_matrix<T> *result
 }
 
 template <class T>
+void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M __attribute__((unused))) {
+  fasttime_t start = gettime();
+  const size_t N = (1u<<SCALE);
+  std::vector<double> r;
+  r.reserve(N);
+  uint64_t sum = 0;
+  for (size_t i = 0; i < N; i++) {
+    long rval = random();
+    r.push_back((double)rval);  
+    sum += rval;
+  }
+  double one_over_sum = 1/(double)sum;
+  double fsum=0;
+  for (auto &e : r) {
+    e *= one_over_sum;
+    fsum += e;
+  }
+  fasttime_t end   = gettime();
+  printf("scale=%2d Edgefactor=%2d K2time: %9.3fs Medges/sec: %7.2f\n", 
+         SCALE, edges_per_vertex, 
+         end-start,
+         1e-6 * (1u<<SCALE)*edges_per_vertex / (end-start));
+}
+
+template <class T>
 void pagerankpipeline(int SCALE, int edges_per_vertex, int n_files) {
   kernel0<T>(SCALE, edges_per_vertex, n_files);
   kernel1<T>(SCALE, edges_per_vertex, n_files);
   csr_matrix<T> M;
   kernel2<T>(SCALE, edges_per_vertex, n_files, &M);
+  kernel3<T>(SCALE, edges_per_vertex,           M);
 }
 
 template void pagerankpipeline<uint32_t>(int SCALE, int edges_per_vertex, int n_files);
