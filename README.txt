@@ -47,8 +47,15 @@ type RunPageRankPipeline
 
 python runPageRankPipeline.py
 
+
+  You will need to install:  numpy scipy python-matplotlib
+  E.g., in Fedora 22 do
+     sudo dnf install numpy scipy python-matplotlib
+ 
 2.4 R
 
 
 2.5 Java
+
+2.6 C++
 
