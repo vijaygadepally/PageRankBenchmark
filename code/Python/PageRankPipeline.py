@@ -83,7 +83,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
 
     Nmax=pow(2,SCALE)
     M = EdgesPerVertex * Nmax
-    c=0.15
+    c=0.85
     Niter=20
 
     print "Number of Edges " + str(M) + ", Max Possible Vertex: " + str(Nmax)

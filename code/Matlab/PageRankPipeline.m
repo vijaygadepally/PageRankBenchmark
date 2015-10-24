@@ -7,7 +7,7 @@ function [K0time K1time K2time K3time] = PageRankPipeline(SCALE,EdgesPerVertex,N
   tab = char(9);
   nl = char(10);
   Niter = 20;                                      % Number of PageRank iterations.
-  c = 0.15;                                        % PageRank damping factor.
+  c = 0.85;                                        % PageRank damping factor.
 
   disp(['Number of Edges: ' num2str(M) ', Maximum Possible Vertex: ' num2str(Nmax)]);
 
@@ -133,6 +133,6 @@ end
 % Architect: Dr. Jeremy Kepner (kepner@ll.mit.edu)
 % MIT
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% (c) <2015> Massachusetts Institute of Technology
+% (c) <2015> Jeremy Kepner
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

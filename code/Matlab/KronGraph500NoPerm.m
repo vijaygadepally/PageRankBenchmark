@@ -24,7 +24,6 @@ function [StartVertex EndVertex] = KronGraph500NoPerm(SCALE,EdgesPerVertex)
   for ib = 1:SCALE            % Loop over each scale.
     ii_bit = rand(1, M) > ab;
     jj_bit = rand(1, M) > ( c_norm * ii_bit + a_norm * not (ii_bit) );
-    2^(ib-1)
     ij = ij + 2^(ib-1) * [ii_bit; jj_bit];
   end
 

@@ -2,8 +2,8 @@ from PageRankPipeline import *
 import numpy as np
 import matplotlib.pyplot as plt
 
-SCALE=range(8,13)
-EdgesPerVertex=32
+SCALE=range(9,14)
+EdgesPerVertex=16
 Nfile=4
 Niter=20
 
@@ -26,10 +26,10 @@ print RateMatrix
 fig=plt.figure()
 ax=fig.add_subplot(1,1,1)
 
-line0, = ax.plot(Nmax*Nmax, RateMatrix[:,0], '--', linewidth=2)
-line1, = ax.plot(Nmax*Nmax, RateMatrix[:,1], '--', linewidth=2)
-line2, = ax.plot(Nmax*Nmax, RateMatrix[:,2], '--', linewidth=2)
-line3, = ax.plot(Nmax*Nmax, RateMatrix[:,3], '--', linewidth=2)
+line0, = ax.plot(M, RateMatrix[:,0], '--', linewidth=2)
+line1, = ax.plot(M, RateMatrix[:,1], '--', linewidth=2)
+line2, = ax.plot(M, RateMatrix[:,2], '--', linewidth=2)
+line3, = ax.plot(M, RateMatrix[:,3], '--', linewidth=2)
 
 plt.legend(['K0 rate', 'K1 rate', 'K2 rate', 'K3 rate'])
 plt.xlabel('Number of Edges')
