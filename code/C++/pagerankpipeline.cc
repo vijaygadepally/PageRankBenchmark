@@ -319,10 +319,11 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
     }
   }
   fasttime_t end   = gettime();
-  printf("scale=%2d Edgefactor=%2d K2time: %9.3fs Medges/sec: %7.2f\n", 
+  printf("scale=%2d Edgefactor=%2d K3time: %9.3fs Medges/sec: %7.2f  MLFLOPS: %7.2f\n", 
          SCALE, edges_per_vertex, 
          end-start,
-         1e-6 * (1u<<SCALE)*edges_per_vertex / (end-start));
+         1e-6 * (1u<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start),
+         2e-6 * (1u<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start));
 }
 
 template <class T>
