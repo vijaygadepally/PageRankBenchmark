@@ -261,7 +261,7 @@ void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr
 }
 
 template <class T>
-void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M __attribute__((unused))) {
+void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M) {
   fasttime_t start = gettime();
   const size_t N = (1u<<SCALE);
   std::vector<double> r;
@@ -277,6 +277,43 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
   for (auto &e : r) {
     e *= one_over_sum;
     fsum += e;
+  }
+
+  printf("r = ");
+  for (auto & e : r) {
+    printf(" %f", e);
+  }
+  printf("\n");
+
+  // Now do the page rank.
+  int page_rank_iteration_count = 20;
+  double c = 0.85;
+  double one_minus_c_over_N = (1-c)/(double)N;
+  std::vector<double> r2(N, 0);
+  for (int pr_count = 0; pr_count < page_rank_iteration_count; pr_count++) {
+    for (size_t i = 0; i < N; i++) {
+      double sum = 0;
+      //printf("Row %ld\n", i);
+      const T start_row = M.row_starts[i];
+      const T end_row   = M.row_starts[i+1];
+      for (T vi = start_row; vi < end_row; vi++) {
+        //printf("sum += %f * %f\n", M.vals[vi], r[M.cols[vi]]);
+        sum += M.vals[vi] * r[M.cols[vi]];
+      }
+      if (0) {
+        r2[i] = sum * c + one_minus_c_over_N;
+      } else {
+        r2[i] = sum;
+      }
+    }
+    std::swap(r, r2);
+    if (0) {
+      printf("pagerank:");
+      for (auto & e : r) {
+        printf(" %f", e);
+      }
+      printf("\n");
+    }
   }
   fasttime_t end   = gettime();
   printf("scale=%2d Edgefactor=%2d K2time: %9.3fs Medges/sec: %7.2f\n", 
