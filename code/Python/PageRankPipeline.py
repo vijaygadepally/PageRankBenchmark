@@ -5,64 +5,81 @@ from scipy.sparse import coo_matrix
 import time
 from numpy import linalg as la
 
+
+# import code
+# import sys
+# def keyboard(banner=None):
+#     ''' Function that mimics the matlab keyboard command '''
+#     # use exception trick to pick up the current frame
+#     try:
+#         raise None
+#     except:
+#         frame = sys.exc_info()[2].tb_frame.f_back
+#     print "# Use quit() to exit :) Happy debugging!"
+#     # evaluate commands in current namespace
+#     namespace = frame.f_globals.copy()
+#     namespace.update(frame.f_locals)
+#     try:
+#         code.interact(banner=banner, local=namespace)
+#     except SystemExit:
+#         return
+
 ###################################################
 ###################################################
-#@profile
-def KronGraph500NoPerm (SCALE, EdgesPerVertex):	
-	N=pow(2,SCALE)
-	M = EdgesPerVertex * N
+def KronGraph500NoPerm (SCALE, EdgesPerVertex):
+    N=pow(2,SCALE)
+    M = EdgesPerVertex * N
 
-	A=0.57
-	B=0.19
-	C=0.19
-	D=1-(A+B+C)
+    A=0.57
+    B=0.19
+    C=0.19
+    D=1-(A+B+C)
 
-	ij=np.ones((2,M))
-	ab=A+B
-	c_norm=C/(1-(A+B))
-	a_norm=A/(A+B)
+    ij=np.zeros((2,M))
 
-	for ib in xrange (0,SCALE):
-		ii_num=np.random.uniform(0,1,M)
-		ii_bit=ii_num>ab
-		jj_num=np.random.uniform(0,1,M)
-		jj_bit = jj_num > (c_norm * ii_bit + a_norm*np.invert(ii_bit))
-		ijcomb = pow(2,ib)*np.vstack((ii_bit,jj_bit)) #allow vertices from 0
+    ab=A+B
+    c_norm=C/(1-(A+B))
+    a_norm=A/(A+B)
+    inum=0
+
+    for ib in range (0,SCALE):
+        ii_num=np.random.uniform(0,1,M)
+        ii_bit=ii_num>ab
+        jj_num=np.random.uniform(0,1,M)
+        jj_bit = jj_num > (c_norm * ii_bit + a_norm*np.invert(ii_bit))
+        ijcomb = (pow(2,ib))*np.vstack((ii_bit,jj_bit)) #allow vertices from 0
         ij = ij+ijcomb
-        print ij
-        StartVertex, EndVertex = np.vsplit(ij, 2)
-	print StartVertex
-	return StartVertex, EndVertex;
+
+    StartVertex, EndVertex = np.vsplit(ij, 2)
+    return StartVertex, EndVertex;
 
 ###################################################
 ###################################################
-#@profile
 def StrArrayWrite(nparray, filename):
-	fo=open(filename, "w")
-	nparray.tofile(fo, sep="\t", format="%s")
-	#print nparray
-	fo.close
+
+    fo=open(filename, "w")
+    nparray.tofile(fo, sep="\t", format="%s")
+    fo.close
 
 ###################################################
 ###################################################
-#@profile
 def StrArrayRead(filename):
-	#fo=open(filename, "r")
-	edgelist=np.fromfile(filename, sep='\t', dtype=np.float)
-    #edgelist=np.load(filename)
-	#edgelist = genfromtxt(filename, delimiter='')
-	#edgelist=pd.read_csv(filename,delimiter='').values
-	#fo.close
-	return edgelist
+
+    #edgelist=np.fromfile(filename, sep='\t', dtype=np.float)
+    #return edgelist
+
+    # FASTER READ
+    edgelist = []
+    with open(filename, 'r') as f:
+        for line in f:
+            edgelist.append(list(map(float, line.split('\t'))))
+    return np.asarray(edgelist)
+
 
 ###################################################
 ###################################################
 #@profile
 def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
-
-#    SCALE=12
-#    EdgesPerVertex=12
-#    Nfile=4
 
     Nmax=pow(2,SCALE)
     M = EdgesPerVertex * Nmax
@@ -82,10 +99,10 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     for i in xrange (0,Nfile):
         fname= "data/K0/" + str(i) + ".tsv"
         print "   Writing: " + fname
-        np.random.seed
+        np.random.seed(i)
         u, v = KronGraph500NoPerm(SCALE,EdgesPerVertex/Nfile)
         uv=np.vstack((u,v))
-        StrArrayWrite(np.transpose(uv) , fname)
+        StrArrayWrite(np.transpose(uv), fname)
 
     K0time = time.clock() - startTime
     print "K0time " + str(K0time) + ", Edges/sec: " + str( M/K0time )
@@ -98,14 +115,15 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     print "Kernel 1: Read, Sort, Write Edges"
     startTime=time.clock()
 
-    edgelist=np.array([])
+    edgelist=np.empty((1,0))
+    #edgelist=np.array([])
 
     #Read into a single array
     for i in xrange (0,Nfile):
         fname= "data/K0/" + str(i) + ".tsv"
         print "   Reading:" + fname
         tmp = StrArrayRead(fname)
-        edgelist=np.concatenate((edgelist,tmp),axis=0)
+        edgelist=np.concatenate((edgelist,tmp),axis=1)
         #edgelist = np.hstack((edgelist, tmp))
 
     edgelist=edgelist.reshape((Nmax*EdgesPerVertex,2))
@@ -134,7 +152,6 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     K1time = time.clock()-startTime
     print "K1time " + str(K1time) + ", Edges/sec: " + str( M/K1time )
 
-    #raise NameError('Die!')
     ###################################################
     ###################################################
 
@@ -142,14 +159,14 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     print "Kernel 2: Read, Filter Edges"
     startTime=time.clock()
 
-    edgelist=np.array([])       
-
+    #edgelist=np.array([])
+    edgelist=np.empty((1,0))
     #Read into a single array
     for i in xrange (0,Nfile):
         fname= "data/K1/" + str(i) + ".tsv"
         print "   Reading:" + fname
         tmp = StrArrayRead(fname)
-        edgelist=np.concatenate((edgelist,tmp),axis=0)
+        edgelist=np.concatenate((edgelist,tmp),axis=1)
         #edgelist = np.hstack((edgelist, tmp))
 
     edgelist=edgelist.reshape((Nmax*EdgesPerVertex,2))
@@ -161,12 +178,9 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     vt=np.squeeze(v)
     dt=np.squeeze(d)
 
-    print max(ut)
-    print min(ut)
     A=csr_matrix((dt, (ut,vt)), shape=(Nmax, Nmax)).toarray()
 
-
-    print "sparsity: " + str(np.count_nonzero(A)) + ' ' + str(Nmax)
+    #print "sparsity: " + str(np.count_nonzero(A)) + ' ' + str(Nmax)
     #Filter and weight data
     din = A.sum(axis=0)
     A[:,din==max(din)]=0
@@ -177,15 +191,15 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     dinv[np.isinf(dinv)]=0
     Dinv=np.diag(dinv, 0)
     A = A*Dinv
-    #Dinv= lil_matrix((Nmax,Nmax))
+
     #Dinv.setdiag(dinv)
     #Dinv=np.reshape(np.repeat(dinv, Nmax), (Nmax,Nmax))
     #A = np.dot(Dinv, A)
 
     K2time=time.clock()-startTime
     print "K2time " + str(K2time) + ", Edges/sec: " + str( M/K2time )
-    raise NameError('Die!')
 
+    #raise NameError('Die!')
 
     ###################################################
     ###################################################
@@ -200,7 +214,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     a=(np.ones(Nmax) * (1-c))/Nmax
 
     for i in xrange (0,Niter):
-        r= A*(r*c) + a
+        r = A*(r*c) + a
 
     K3time=time.clock()-startTime
     print "K3time " + str(K3time) + ", Edges/sec: " + str( M/K3time )

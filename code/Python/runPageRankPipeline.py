@@ -2,8 +2,8 @@ from PageRankPipeline import *
 import numpy as np
 import matplotlib.pyplot as plt
 
-SCALE=range(14,15)
-EdgesPerVertex=6
+SCALE=range(8,13)
+EdgesPerVertex=32
 Nfile=4
 Niter=20
 
@@ -23,7 +23,6 @@ Ratemat4 = RateMatrix[:,3]*Niter
 RateMatrix[:,3] = Ratemat4
 
 print RateMatrix
-
 fig=plt.figure()
 ax=fig.add_subplot(1,1,1)
 
@@ -39,4 +38,4 @@ plt.ylabel('edges/second')
 ax.set_xscale('log')
 ax.set_yscale('log')
 
-#plt.show()
+plt.show()
