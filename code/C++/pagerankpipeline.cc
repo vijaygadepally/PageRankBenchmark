@@ -262,7 +262,7 @@ void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr
 
 template <class T>
 void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M) {
-  fasttime_t start = gettime();
+
   const size_t N = (1u<<SCALE);
   std::vector<double> r;
   r.reserve(N);
@@ -292,6 +292,7 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
   double c = 0.85;
   double one_minus_c_over_N = (1-c)/(double)N;
   std::vector<double> r2(N, 0);
+  fasttime_t start = gettime();
   for (int pr_count = 0; pr_count < page_rank_iteration_count; pr_count++) {
     for (size_t i = 0; i < N; i++) {
       double sum = 0;
@@ -302,7 +303,7 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
         //printf("sum += %f * %f\n", M.vals[vi], r[M.cols[vi]]);
         sum += M.vals[vi] * r[M.cols[vi]];
       }
-      if (0) {
+      if (1) {
         r2[i] = sum * c + one_minus_c_over_N;
       } else {
         r2[i] = sum;
