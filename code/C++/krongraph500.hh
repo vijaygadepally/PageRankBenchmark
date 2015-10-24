@@ -16,4 +16,8 @@ std::vector<std::tuple<T, T>> kronecker(int SCALE, int edges_per_vertex, bool ra
 //   Duplicate edges may be returned, all the dges ha
 //  Requires that ((1<<SCALE) * edges_per_vertex) fits in T.
 
+void write_kronecker(const std::string &filename, int SCALE, int edges_per_verte);
+// Effect: Write an edgelist to a file.  For this we don't have the randomize option (we never randomize).
+//  Edges are written as tab-separated integers followed by a newline.
+
 #endif

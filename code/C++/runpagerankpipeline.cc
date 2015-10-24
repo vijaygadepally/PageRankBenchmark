@@ -12,7 +12,7 @@
 
 
 static const int min_scale_default = 10;
-static const int max_scale_default = 16;
+static const int max_scale_default = 22;
 
 static char *progname;
 
