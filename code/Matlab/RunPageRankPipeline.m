@@ -21,3 +21,11 @@ Krate(4,:) = Niter .* Krate(4,:);
 figure;
 loglog(M,Krate);  xlabel('number of edges');  ylabel('edges/second');
 legend('K0 Generate','K1 Sort','K2 Filter','K3 PageRank','Location','NorthEastOutside');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PageRank Pipeline Benchmark
+% Architect: Dr. Jeremy Kepner (kepner@ll.mit.edu)
+% MIT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (c) <2015> Jeremy Kepner
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

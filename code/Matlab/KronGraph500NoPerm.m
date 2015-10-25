@@ -29,3 +29,11 @@ function [StartVertex EndVertex] = KronGraph500NoPerm(SCALE,EdgesPerVertex)
 
   StartVertex = ij(1,:).';     % Copy to output.
   EndVertex = ij(2,:).';       % Copy to output.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PageRank Pipeline Benchmark
+% Architect: Dr. Jeremy Kepner (kepner@ll.mit.edu)
+% MIT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (c) <2015> Jeremy Kepner
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

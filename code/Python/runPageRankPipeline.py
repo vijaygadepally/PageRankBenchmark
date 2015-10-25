@@ -5,7 +5,7 @@ import numpy as np
 if PLOT:
     import matplotlib.pyplot as plt
 
-SCALE=range(9,15)
+SCALE=range(9,19)
 EdgesPerVertex=16
 Nfile=4
 Niter=20
@@ -44,3 +44,11 @@ if PLOT:
     ax.set_yscale('log')
     plt.savefig('python_pgresults.pdf')
     #plt.show()
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PageRank Pipeline Benchmark
+% Developer: Dr. Vijay Gadepally (vijayg@mit.edu)
+% MIT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (c) <2015> Vijay Gadepally
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

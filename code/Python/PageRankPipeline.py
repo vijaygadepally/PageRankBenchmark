@@ -217,3 +217,11 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     print "K3time " + str(K3time) + ", Edges/sec: " + str( M/K3time )
 
     return K0time, K1time, K2time, K3time;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PageRank Pipeline Benchmark
+% Developer: Dr. Vijay Gadepally (vijayg@mit.edu)
+% MIT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (c) <2015> Vijay Gadepally
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
