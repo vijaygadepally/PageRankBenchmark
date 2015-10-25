@@ -1,11 +1,11 @@
-PLOT=1
+PLOT=0
 from PageRankPipeline import *
 import numpy as np
 
 if PLOT:
     import matplotlib.pyplot as plt
 
-SCALE=range(9,19)
+SCALE=range(9,16)
 EdgesPerVertex=16
 Nfile=4
 Niter=20
