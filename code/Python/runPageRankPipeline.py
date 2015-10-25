@@ -1,11 +1,11 @@
-PLOT=0
+PLOT=1
 from PageRankPipeline import *
 import numpy as np
 
 if PLOT:
     import matplotlib.pyplot as plt
 
-SCALE=range(9,16)
+SCALE=range(10,22)
 EdgesPerVertex=16
 Nfile=4
 Niter=20
@@ -45,10 +45,10 @@ if PLOT:
     plt.savefig('python_pgresults.pdf')
     #plt.show()
 
-'''%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% PageRank Pipeline Benchmark
-% Developer: Dr. Vijay Gadepally (vijayg@mit.edu)
-% MIT
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% (c) <2015> Vijay Gadepally
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'''
+########################################################
+# PageRank Pipeline Benchmark
+# Developer: Dr. Vijay Gadepally (vijayg@mit.edu)
+# MIT
+########################################################
+# (c) <2015> Vijay Gadepally
+########################################################
