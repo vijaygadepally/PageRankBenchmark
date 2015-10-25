@@ -1,4 +1,4 @@
-PLOT=0
+PLOT=1
 from PageRankPipeline import *
 import numpy as np
 
@@ -42,5 +42,5 @@ if PLOT:
 
     ax.set_xscale('log')
     ax.set_yscale('log')
-
-    plt.show()
+    plt.savefig('python_pgresults.pdf')
+    #plt.show()

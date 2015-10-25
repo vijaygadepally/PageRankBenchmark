@@ -1,7 +1,7 @@
 import numpy as np
-from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
+from scipy.sparse import csc_matrix
+from scipy.sparse import lil_matrix
 import time
 from numpy import linalg as la
 
@@ -175,7 +175,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     vt=np.squeeze(v)
     dt=np.squeeze(d)
 
-    A=csr_matrix((dt, (ut,vt)), shape=(Nmax, Nmax))
+    A=csr_matrix((dt, (ut,vt)), shape=(Nmax, Nmax)).tolil()
 
     #Filter and weight data
     din = A.sum(axis=0)
@@ -190,7 +190,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     D=csr_matrix((dval, (np.squeeze(dind),np.squeeze(dind))), shape=(Nmax,Nmax))
     #Dinv=np.diag(dinv, 0)
 
-    A = A.dot(D)
+    A = (A.tocsr()).dot(D)
 
     K2time=time.clock()-startTime
     print "K2time " + str(K2time) + ", Edges/sec: " + str( M/K2time )
