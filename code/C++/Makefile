@@ -1,3 +1,5 @@
+# Pagerank Pipeline Benchmark in C++
+# Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu
 OPTFLAGS = -O2
 DIALECT = -std=c++11 
 CXXFLAGS = $(DIALECT) $(OPTFLAGS) -W -Wall -Werror -g
