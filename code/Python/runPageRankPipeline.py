@@ -1,4 +1,4 @@
-PLOT=1
+PLOT=0
 from PageRankPipeline import *
 import numpy as np
 
