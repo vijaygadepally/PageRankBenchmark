@@ -5,7 +5,7 @@ import numpy as np
 if PLOT:
     import matplotlib.pyplot as plt
 
-SCALE=range(10,23)
+SCALE=range(10,22)
 EdgesPerVertex=16
 Nfile=4
 Niter=20
@@ -24,6 +24,18 @@ ElementMatrix = np.reshape(np.repeat(M, 4), (len(SCALE),4))
 RateMatrix=ElementMatrix/TimeArray
 Ratemat4 = RateMatrix[:,3]*Niter
 RateMatrix[:,3] = Ratemat4
+
+f=open('python.out','w')
+strtowrite="SCALE \t K0-edges-per-s \t K1-edges-per-s \t K2-edges-per-s \t K3-edges-per-s\n"
+f.write(strtowrite)
+
+#Write Ratematrix
+out=""
+for row in xrange (0,len(SCALE)):
+    tmp="%d" % SCALE[row] + "\t" + "%0f" % RateMatrix[row,0] + "\t" + "%0f" % RateMatrix[row,1] + "\t" + "%0f" % RateMatrix[row,2]+ "\t" + "%0f" % RateMatrix[row,3]+chr(10)
+    out+=tmp
+
+f.write(out)
 
 print RateMatrix
 

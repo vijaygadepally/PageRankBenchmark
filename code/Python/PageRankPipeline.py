@@ -4,6 +4,7 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import lil_matrix
 from scipy.sparse import dok_matrix
 import time
+from numpy.compat import asbytes
 from numpy import linalg as la
 
 
@@ -39,25 +40,43 @@ def KronGraph500NoPerm (SCALE, EdgesPerVertex):
 ###################################################
 def StrArrayWrite(nparray, filename):
 
-    np.savetxt(filename, nparray, fmt='%16d', delimiter='\t', newline='\n')
+    #np.savetxt(filename, nparray, fmt='%16d', delimiter='\t', newline='\n')
+    
+    f=open(filename,"wt",buffering=20*(1024**2))
+    data = [str(float(row[0])) + '\t' + str(float(row[1])) + '\n' for row in nparray]
+    f.write(''.join(data))
+    f.close
 
-    # fo=open(filename, "w")
-    # nparray.tofile(fo, sep="\t", format="%s")
-    # fo.close
+    #out=""
+    #for row in nparray:
+    #    tmp="%0d" % row[0] + "\t" + "%d" % row[1] +chr(10)
+    #    out +=tmp
+    #    if len(out)>100000:
+    #        f.write(out)
+    #        out=""
+
 
 ###################################################
 ###################################################
 def StrArrayRead(filename):
 
-    #edgelist=np.fromfile(filename, sep='\t', dtype=np.float)
-    #return edgelist
-
     # FASTER READ
     edgelist = []
-    with open(filename, 'r') as f:
-        for line in f:
-            edgelist.append(list(map(float, line.split('\t'))))
-    return np.asarray(edgelist)
+    f=open(filename,'r')
+    data=f.readlines()
+    
+    #Use list comprehensions for faster read
+    data=[x.split('\n')[0] for x in data]
+    data=[x.split('\t') for x in data]
+    data=[(float(x[0]), float(x[1])) for x in data]
+    return np.asarray(data)
+
+    #edgelist=np.fromfile(filename, sep='\t', dtype=np.float)
+
+    #with open(filename, 'r') as f:
+    #    for line in f:
+    #        edgelist.append(list(map(float, line.split('\t'))))
+    #return np.asarray(edgelist)
 
 ###################################################
 ###################################################
