@@ -195,7 +195,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
 
     K3time=time.clock()-startTime
     print "Pagerank Sum= " + str(r.sum(axis=0))
-    print "K3time " + str(K3time) + ", Edges/sec: " + str( M/K3time )
+    print "K3time " + str(K3time) + ", Edges/sec: " + str( Niter*M/K3time )
 
     return K0time, K1time, K2time, K3time;
 
