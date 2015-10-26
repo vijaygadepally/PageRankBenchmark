@@ -2,27 +2,10 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import lil_matrix
+from scipy.sparse import dok_matrix
 import time
 from numpy import linalg as la
 
-
-# import code
-# import sys
-# def keyboard(banner=None):
-#     ''' Function that mimics the matlab keyboard command '''
-#     # use exception trick to pick up the current frame
-#     try:
-#         raise None
-#     except:
-#         frame = sys.exc_info()[2].tb_frame.f_back
-#     print "# Use quit() to exit :) Happy debugging!"
-#     # evaluate commands in current namespace
-#     namespace = frame.f_globals.copy()
-#     namespace.update(frame.f_locals)
-#     try:
-#         code.interact(banner=banner, local=namespace)
-#     except SystemExit:
-#         return
 
 ###################################################
 ###################################################
@@ -107,7 +90,6 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     K0time = time.clock() - startTime
     print "K0time " + str(K0time) + ", Edges/sec: " + str( M/K0time )
 
-
     ###################################################
     ###################################################
 
@@ -116,7 +98,6 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     startTime=time.clock()
 
     edgelist=np.empty((0,2))
-    #edgelist=np.array([])
 
     #Read into a single array
     for i in xrange (0,Nfile):
@@ -124,7 +105,6 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
         print "   Reading:" + fname
         tmp = StrArrayRead(fname)
         edgelist=np.concatenate((edgelist,tmp),axis=0)
-        #edgelist = np.hstack((edgelist, tmp))
 
     #Sort by start edge
     u,v = np.hsplit(edgelist,2)
@@ -157,7 +137,6 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     print "Kernel 2: Read, Filter Edges"
     startTime=time.clock()
 
-    #edgelist=np.array([])
     edgelist=np.empty((0,2))
 
     #Read into a single array
@@ -166,7 +145,6 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
         print "   Reading:" + fname
         tmp = StrArrayRead(fname)
         edgelist=np.concatenate((edgelist,tmp),axis=0)
-        #edgelist = np.hstack((edgelist, tmp))
 
     #Construct adjacency matrix
     u,v = np.hsplit(edgelist,2)
@@ -175,28 +153,32 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     vt=np.squeeze(v)
     dt=np.squeeze(d)
 
-    A=csr_matrix((dt, (ut,vt)), shape=(Nmax, Nmax)).tolil()
+    A=csc_matrix((dt, (ut,vt)), shape=(Nmax, Nmax))
 
     #Filter and weight data
     din = A.sum(axis=0)
-    A[:,np.ravel(din==np.max(din))]=0 #A[:,din==max(din)]=0
-    A[:,np.ravel(din==1)]=0 #A[:,din==1]=0
+
+    for row in np.ravel(np.nonzero(din==np.max(din))*1):
+        A.data[A.indptr[row]:A.indptr[row+1]] =0
+
+    for row in np.ravel(np.nonzero(din==1)*1):
+        A.data[A.indptr[row]:A.indptr[row+1]] =0
+
     dout = A.sum(axis=1) #dout =sum(np.transpose(A))
     dinv=np.squeeze(np.asarray(1/dout))
     dinv[np.isinf(dinv)]=0
     dind=np.asarray(np.where(dinv>0))
     dval=dinv[dinv>0]
 
-    D=csr_matrix((dval, (np.squeeze(dind),np.squeeze(dind))), shape=(Nmax,Nmax))
-    #Dinv=np.diag(dinv, 0)
+    D=csc_matrix((dval, (np.squeeze(dind),np.squeeze(dind))), shape=(Nmax,Nmax))
 
-    A = (A.tocsr()).dot(D)
+    #Perform filtering
+    A=D*A
 
     K2time=time.clock()-startTime
     print "K2time " + str(K2time) + ", Edges/sec: " + str( M/K2time )
 
     #raise NameError('Die!')
-
     ###################################################
     ###################################################
 
@@ -205,12 +187,11 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     startTime=time.clock()
 
     r=np.random.uniform(0,1,(Nmax,1))
-    r=r/la.norm(r)
-
+    r=r/la.norm(r,1)
     a=(np.ones((Nmax,1)) * (1-c))/Nmax
 
     for i in xrange (0,Niter):
-        r = A.dot(r)*c + a
+        r = A*(r*c) + a
 
     K3time=time.clock()-startTime
     print "Pagerank Sum= " + str(r.sum(axis=0))
@@ -218,10 +199,11 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
 
     return K0time, K1time, K2time, K3time;
 
-'''%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% PageRank Pipeline Benchmark
-% Developer: Dr. Vijay Gadepally (vijayg@mit.edu)
-% MIT
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% (c) <2015> Vijay Gadepally
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'''
+
+########################################################
+# PageRank Pipeline Benchmark
+# Developer: Dr. Vijay Gadepally (vijayg@mit.edu)
+# MIT
+########################################################
+# (c) <2015> Vijay Gadepally
+########################################################
