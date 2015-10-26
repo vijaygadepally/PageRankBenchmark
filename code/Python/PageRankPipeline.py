@@ -4,7 +4,6 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import lil_matrix
 from scipy.sparse import dok_matrix
 import time
-from numpy.compat import asbytes
 from numpy import linalg as la
 
 
