@@ -14,11 +14,11 @@ function KronGraph500NoPerm(SCALE,EdgesPerVertex)
   
   N = 2.^SCALE;                       # Set  power of number of vertices..
 
-  M = int(EdgesPerVertex .* N);     # Compute total number of edges to generate.
+  M = round(Int, EdgesPerVertex .* N);     # Compute total number of edges to generate.
 
   A = 0.57; B = 0.19;  C = 0.19;   D = 1-(A+B+C);  # Set R-MAT (2x2 Kronecker) coefficeints.
  
-  ij = ones (2, M);           # Initialize index arrays.
+  ij = ones(2, M);            # Initialize index arrays.
   ab = A + B;                 # Normalize coefficients.
   c_norm = C/(1 - (A + B));
   a_norm = A/(A + B);
@@ -31,8 +31,8 @@ function KronGraph500NoPerm(SCALE,EdgesPerVertex)
     ij = ij + 2^(ib-1) * [ii_bit; jj_bit];
   end
 
-  StartVertex = ij[1,:]';     # Copy to output.
-  EndVertex = ij[2,:]';       # Copy to output.
+  StartVertex = ij[1,:];     # Copy to output. (row vector)
+  EndVertex = ij[2,:];       # Copy to output. (row vector)
 
   return StartVertex,EndVertex;
 end

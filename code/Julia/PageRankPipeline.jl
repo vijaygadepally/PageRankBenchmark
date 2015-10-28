@@ -1,19 +1,19 @@
 #
 include("KronGraph500NoPerm.jl")
-include("EdgeFileWrite.jl")
-include("EdgeFileRead.jl")
+include("StrFileWrite.jl")
+include("StrFileRead.jl")
 
 function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
 
-  Nmax = 2.^SCALE;                                 # Max vertex ID.
-  M = EdgesPerVertex .* Nmax;                      # Total number of edges.
-  myFiles = [1:Nfile].';                               # Set list of files.
+  Nmax = 2.^SCALE;                           # Max vertex ID.
+  M = EdgesPerVertex .* Nmax;                # Total number of edges.
+  myFiles = collect(1:Nfile).';              # Set list of files.
   #
   # Julia parallel verison 
-  # figur out later: how to distribute the load
+  # Figure it out later: how to distribute the load
   # myFiles = global_ind(zeros(Nfile,1,map([Np 1],{},0:Np-1)));   # PARALLEL.
-  tab = char(9);
-  nl = char(10);
+  tab = Char(9);
+  nl = Char(10);
   Niter = 20;                                      # Number of PageRank iterations.
   c = 0.15;                                        # PageRank damping factor.
 
@@ -28,16 +28,13 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
 
     for i in myFiles
       fname = "data/K0/" * string(i) * ".tsv";
-      println("  Writing: " * fname);  # Read filename.
-      srand(i);                              # Set random seed to be unique for this file.
-      # @printf("%.0f \t %.0f\n",SCALE,EdgesPerVertex./Nfile); 
-      u, v = KronGraph500NoPerm(SCALE,EdgesPerVertex./Nfile);                    # Generate data.
- 
-      # edgeStr = @sprintf("%16.16g $tab %16.16g $nl",[u.'; v.'])      # Convert edges to strings.
-      # edgeStr = edgeStr(edgeStr ~= ' ');                             # Remove extra spaces.
-      # StrFileWrite(edgeStr,fname);                                   # Write string to file.
-      # Write edges to file
-      EdgeFileWrite(u,v,fname);
+      println("  Writing: " * fname);                          # Read filename.
+      srand(i);                                                # Set random seed to be unique for this file.
+      u, v = KronGraph500NoPerm(SCALE,EdgesPerVertex./Nfile);  # Generate data.
+	  
+      edgeStr = string(round(Int64,[u'; v']'));                        # Convert edges to strings in (u,v) pairs
+      edgeStr = replace(edgeStr,r"\[|\]|\n","");               # Remove extra chars ([, ], \n).
+      StrFileWrite(edgeStr,fname);                             # Write string to file.
 
     end
 
@@ -55,7 +52,7 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
     for i in myFiles
       fname = "data/K0/" * string(i) * ".tsv";
       println("  Reading: " * fname);  # Read filename.
-      ut,vt = EdgeFileRead(fname);
+      ut,vt = StrFileRead(fname);
       # Concatenate to u,v
       if i == 1
          u = ut; v = vt;
@@ -64,31 +61,32 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       end
     end
 
-    # Sort by start edge.
-    # uv = sscanf(edgeStr,'#f');                      # Convert string to numeric data.  # u = uv(1:2:end);                                # Get starting vertices.
-    # v = uv(2:2:end);                                # Get ending vertices.
-
-    sortIndex = sortperm(vec(u));                     # Sort starting vertices.
-    u = u[sortIndex]
-    v = v[sortIndex]
-
+    sortIndex = sortperm(vec(u));                      # Sort starting vertices.
+    u = u[sortIndex];                                  # Get starting vertices.
+    v = v[sortIndex];                                  # Get ending vertices.
+  
+  K1time1 = toq();
+  tic();
     # Write all the data to files.
     j = 1;                                                         # Initialize file counter.
     for i in myFiles
-      jEdgeStart = ((j-1).*(size(u,1)./length(myFiles))+1);        # Compute first edge of file.
-      jEdgeEnd = ((j).*(size(u,1)./length(myFiles)));              # Compute last edge of file.
+      jEdgeStart = round(Int64,((j-1).*(size(u,1)./length(myFiles))+1));        # Compute first edge of file.
+      jEdgeEnd = round(Int64,((j).*(size(u,1)./length(myFiles))));              # Compute last edge of file.
       uu = u[jEdgeStart:jEdgeEnd];                                 # Select start vertices.
       vv = v[jEdgeStart:jEdgeEnd];                                 # Select end vertices.
       fname = "data/K1/" * string(i) * ".tsv";
-      println("  Writing: " * fname);                                # Create filename.
-      # edgeStr = sprintf(['#16.16g' tab '#16.16g' nl],[uu'; vv']);  # Convert edges to strings.
-      # edgeStr = edgeStr(edgeStr ~= ' ');                           # Remove extra spaces.
-      # StrFileWrite(edgeStr,fname);                                 # Write string to file.
-      EdgeFileWrite(uu,vv,fname);
+      println("  Writing: " * fname);                              # Create filename.
+	  
+      edgeStr = string(round(Int64,[uu'; vv']'));                  # Convert edges to strings in (u,v) pairs
+      edgeStr = replace(edgeStr,r"\[|\]|\n","");                   # Remove extra chars ([, ], \n).
+      StrFileWrite(edgeStr,fname);                                   # uu,vv: row vector
       j = j + 1;                                                   # Increment file counter.
     end
 
-  K1time = toq();
+  K1time2 = toq();
+  K1time = K1time1 + K1time2;
+  println("K1 Time (reading):" * string(K1time1) * ", Edges/sec: " * string(M./K1time1));
+  println("K1 Time (writing):" * string(K1time2) * ", Edges/sec: " * string(M./K1time1));
   println("K1 Time: " * string(K1time) * ", Edges/sec: " * string(M./K1time));
 
 
@@ -102,29 +100,25 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
     for i in myFiles
       fname = "data/K1/" * string(i) * ".tsv";
       println("  Reading: " * fname);                # Read filename.
-      ut,vt = EdgeFileRead(fname);
+      ut,vt = StrFileRead(fname);
       if i == 1
-         u = ut; v = vt;
+         u = ut; v = vt;                             # Initialize starting and ending vertices.
       else
-         u = hcat(u,ut); v = hcat(v,vt);
+         u = hcat(u,ut); v = hcat(v,vt);             # Get the rest of starting and ending vertices.
       end
     end
 
     # Construct adjacency matrix.
-    # uv = sscanf(edgeStr,'#f');       # Convert string to numeric data.
-    # u = uv(1:2:end);                 # Get starting vertices.
-    # v = uv(2:2:end);                 # Get ending vertices.
-    A = sparse(int(vec(u)),int(vec(v)),1,Nmax,Nmax); # Create adjacency matrix.
-    # A = sparse(u,v,1,Nmax,Nmax);     # Create adjacency matrix.
+    A = sparse(round(Int64,vec(u)),round(Int64,vec(v)),1,Nmax,Nmax); # Create adjacency matrix.
 
     # Filter and weight the adjacency matrix.
-    din = sum(A,1);                    # Compute in degree.
-    setindex!(A,0,find(din == maximum(din))) # Eliminate the super-node.
-    setindex!(A,0,find(din == 1))        # Eliminate the leaf-node.
-    dout = sum(A,2);                   # Compute the out degree.
-    i = find(dout);                      # Find vertices with outgoing edges (dout > 0).
-    DoutInv = sparse(i,i,1./dout[i],Nmax,Nmax);   # Create diagonal weight matrix.
-    A = DoutInv * A;                   # Apply weight matrix.
+    din = sum(A,1);                              # Compute in degree.
+    setindex!(A,0,find(din == maximum(din)))     # Eliminate the super-node.
+    setindex!(A,0,find(din == 1))                # Eliminate the leaf-node.
+    dout = sum(A,2);                             # Compute the out degree.
+    i = find(dout);                              # Find vertices with outgoing edges (dout > 0).
+    DoutInv = sparse(i,i,1./dout[i],Nmax,Nmax);  # Create diagonal weight matrix.
+    A = DoutInv * A;                             # Apply weight matrix.
 
   K2time = toq();
   println("K2 Time: " * string(K2time) * ", Edges/sec: " * string(M./K2time));
