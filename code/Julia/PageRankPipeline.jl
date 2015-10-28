@@ -30,7 +30,13 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       fname = "data/K0/" * string(i) * ".tsv";
       println("  Writing: " * fname);  # Read filename.
       srand(i);                              # Set random seed to be unique for this file.
+      # @printf("%.0f \t %.0f\n",SCALE,EdgesPerVertex./Nfile); 
       u, v = KronGraph500NoPerm(SCALE,EdgesPerVertex./Nfile);                    # Generate data.
+ 
+      # edgeStr = @sprintf("%16.16g $tab %16.16g $nl",[u.'; v.'])      # Convert edges to strings.
+      # edgeStr = edgeStr(edgeStr ~= ' ');                             # Remove extra spaces.
+      # StrFileWrite(edgeStr,fname);                                   # Write string to file.
+      # Write edges to file
       EdgeFileWrite(u,v,fname);
 
     end
@@ -58,9 +64,13 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       end
     end
 
+    # Sort by start edge.
+    # uv = sscanf(edgeStr,'#f');                      # Convert string to numeric data.  # u = uv(1:2:end);                                # Get starting vertices.
+    # v = uv(2:2:end);                                # Get ending vertices.
+
     sortIndex = sortperm(vec(u));                     # Sort starting vertices.
-    u = u[sortIndex]                                  # Get starting vertices.
-    v = v[sortIndex]                                  # Get ending vertices.
+    u = u[sortIndex]
+    v = v[sortIndex]
 
     # Write all the data to files.
     j = 1;                                                         # Initialize file counter.
@@ -71,6 +81,9 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       vv = v[jEdgeStart:jEdgeEnd];                                 # Select end vertices.
       fname = "data/K1/" * string(i) * ".tsv";
       println("  Writing: " * fname);                                # Create filename.
+      # edgeStr = sprintf(['#16.16g' tab '#16.16g' nl],[uu'; vv']);  # Convert edges to strings.
+      # edgeStr = edgeStr(edgeStr ~= ' ');                           # Remove extra spaces.
+      # StrFileWrite(edgeStr,fname);                                 # Write string to file.
       EdgeFileWrite(uu,vv,fname);
       j = j + 1;                                                   # Increment file counter.
     end
@@ -91,14 +104,18 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       println("  Reading: " * fname);                # Read filename.
       ut,vt = EdgeFileRead(fname);
       if i == 1
-         u = ut; v = vt;                             # Initialize starting and ending vertices.
+         u = ut; v = vt;
       else
-         u = hcat(u,ut); v = hcat(v,vt);             # Get the rest of starting and ending vertices.
+         u = hcat(u,ut); v = hcat(v,vt);
       end
     end
 
     # Construct adjacency matrix.
+    # uv = sscanf(edgeStr,'#f');       # Convert string to numeric data.
+    # u = uv(1:2:end);                 # Get starting vertices.
+    # v = uv(2:2:end);                 # Get ending vertices.
     A = sparse(int(vec(u)),int(vec(v)),1,Nmax,Nmax); # Create adjacency matrix.
+    # A = sparse(u,v,1,Nmax,Nmax);     # Create adjacency matrix.
 
     # Filter and weight the adjacency matrix.
     din = sum(A,1);                    # Compute in degree.

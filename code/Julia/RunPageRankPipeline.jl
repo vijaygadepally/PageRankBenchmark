@@ -1,6 +1,6 @@
 #!/usr/local/Julia/latest/bin/julia
 #
-using Plots
+using PyPlot
 
 include("PageRankPipeline.jl")
 
@@ -27,25 +27,8 @@ end
 Krate = bsxfun_rdivide(M,Ktime);
 Krate[4,:] = Niter .* Krate[4,:];
 
-# Julia plot uisng gadfly() aloing with Plots package
-# Requires web browser to display the plot
-# Works with Julia 0.4.0, Need to install the following packages and their dependencies
-#
-#  "Gadfly"            => v"0.3.18"
-#  "Plots"             => v"0.4.0"
-#
-gadfly()
-styles = setdiff(supportedStyles(),[:auto])';
-plot(M',Krate',style=:auto,label=map(string,labels),w=5)
-xaxis!("number of edges",:log10)
-yaxis!("edges/second",:log10)
+# Figure out the plot later
+# figure;
+# loglog(M,Krate);  xlabel('number of edges');  ylabel('edges/second');
+# legend('K0 Generate','K1 Sort','K2 Filter','K3 PageRank','Location','NorthEastOutside');
 
-
-########################################################
-# PageRank Pipeline Benchmark
-# Architect: Dr. Jeremy Kepner (kepner@ll.mit.edu)
-# Julia Translation: Dr. Chansup Byun (cbyun@ll.mit.edu)
-# MIT
-########################################################
-# (c) <2015> Massachusetts Institute of Technology
-########################################################
