@@ -160,7 +160,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     vt=np.squeeze(v)
     dt=np.squeeze(d)
 
-    A=coo_matrix((dt, (ut,vt)), shape=(Nmax, Nmax)).tobsr()
+    A=csc_matrix((dt, (ut,vt)), shape=(Nmax, Nmax))
 
     #Filter and weight data
     din = A.sum(axis=0)
@@ -177,7 +177,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     dind=np.asarray(np.where(dinv>0))
     dval=dinv[dinv>0]
 
-    D=coo_matrix((dval, (np.squeeze(dind),np.squeeze(dind))), shape=(Nmax,Nmax)).tobsr()
+    D=csc_matrix((dval, (np.squeeze(dind),np.squeeze(dind))), shape=(Nmax,Nmax))
 
     #Perform filtering
     A= D*A
