@@ -1,10 +1,10 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
-from scipy.sparse import lil_matrix
-from scipy.sparse import dok_matrix
+from scipy.sparse import coo_matrix
 import time
 from numpy import linalg as la
+#import pandas as pd
 
 
 ###################################################
@@ -39,43 +39,32 @@ def KronGraph500NoPerm (SCALE, EdgesPerVertex):
 ###################################################
 def StrArrayWrite(nparray, filename):
 
-    #np.savetxt(filename, nparray, fmt='%16d', delimiter='\t', newline='\n')
-    
     f=open(filename,"wt",buffering=20*(1024**2))
+    f=open(filename,"w")
     data = [str(float(row[0])) + '\t' + str(float(row[1])) + '\n' for row in nparray]
     f.write(''.join(data))
-    f.close
+    f.close()
 
-    #out=""
-    #for row in nparray:
-    #    tmp="%0d" % row[0] + "\t" + "%d" % row[1] +chr(10)
-    #    out +=tmp
-    #    if len(out)>100000:
-    #        f.write(out)
-    #        out=""
+    #Use Pandas if you have it
+	#pd.DataFrame(nparray).to_csv(filename, sep='\t', header=False, index=False)
+
 
 
 ###################################################
 ###################################################
 def StrArrayRead(filename):
 
-    # FASTER READ
-    edgelist = []
     f=open(filename,'r')
-    data=f.readlines()
-    
-    #Use list comprehensions for faster read
-    data=[x.split('\n')[0] for x in data]
-    data=[x.split('\t') for x in data]
-    data=[(float(x[0]), float(x[1])) for x in data]
-    return np.asarray(data)
+    edgelist = []
+    with open(filename, 'r') as f:
+        for line in f:
+            edgelist.append(list(map(float, line.split('\t'))))
+    f.close()
+    return np.asarray(edgelist)
 
-    #edgelist=np.fromfile(filename, sep='\t', dtype=np.float)
+    #Use Pandas if you have it
+	#return pd.read_csv(filename, delimiter='\t').as_matrix()
 
-    #with open(filename, 'r') as f:
-    #    for line in f:
-    #        edgelist.append(list(map(float, line.split('\t'))))
-    #return np.asarray(edgelist)
 
 ###################################################
 ###################################################
@@ -191,7 +180,7 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     D=csc_matrix((dval, (np.squeeze(dind),np.squeeze(dind))), shape=(Nmax,Nmax))
 
     #Perform filtering
-    A=D*A
+    A= D*A
 
     K2time=time.clock()-startTime
     print "K2time " + str(K2time) + ", Edges/sec: " + str( M/K2time )
