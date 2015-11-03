@@ -41,6 +41,16 @@ Start Octave
 type RunPageRankPipeline
 
 2.3 Julia
+ 
+Prerequisite: Julia 0.4.0 release
+ 
+Go to PageRankPipeline/code/Julia directory.
+ 
+Edit PageRankPipeline/code/Octave/RunPageRankPipeline.jl set SCALE and Nfile variables as desired.
+ 
+Make sure Julia 0.4.0 version is used.
+ 
+julia RunPageRankPipeline.jl
 
 
 2.4 Python

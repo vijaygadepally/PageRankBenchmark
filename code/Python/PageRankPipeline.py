@@ -4,6 +4,7 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
 import time
 from numpy import linalg as la
+#Use the pandas package if available
 #import pandas as pd
 
 
