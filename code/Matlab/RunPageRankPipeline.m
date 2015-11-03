@@ -1,6 +1,5 @@
 
-%SCALE = [10:22];                                 % Scale of problem.
-SCALE = [9:13];                                 % Scale of problem.
+SCALE = [10:22];                                 % Scale of problem.
 EdgesPerVertex = 16;                             % Average degree of each vertex (power of 2).
 Nfile = 4;                                       % Number of files to use (any power of 2).
 Niter = 20;                                      % Number of PageRank iterations.
@@ -17,6 +16,12 @@ end
 % Compute the rate.
 Krate = bsxfun(@rdivide,M,Ktime);
 Krate(4,:) = Niter .* Krate(4,:);
+Kout = [SCALE; Krate];
+
+fid=fopen('matlabOutput.tsv','w');
+fprintf(fid,'%s\t%s\t%s\t%s\t%s\n', 'SCALE', 'K0time', 'K1time', 'K2time', 'K3time');
+fclose(fid);
+dlmwrite('matlabOutput.tsv', Kout.','delimiter', char(9), '-append');
 
 figure;
 loglog(M,Krate);  xlabel('number of edges');  ylabel('edges/second');

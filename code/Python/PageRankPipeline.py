@@ -47,7 +47,7 @@ def StrArrayWrite(nparray, filename):
     f.close()
 
     #Use Pandas if you have it
-	#pd.DataFrame(nparray).to_csv(filename, sep='\t', header=False, index=False)
+    #pd.DataFrame(nparray).to_csv(filename, sep='\t', header=False, index=False)
 
 
 
@@ -64,7 +64,7 @@ def StrArrayRead(filename):
     return np.asarray(edgelist)
 
     #Use Pandas if you have it
-	#return pd.read_csv(filename, delimiter='\t').as_matrix()
+    #return pd.read_csv(filename, delimiter='\t').as_matrix()
 
 
 ###################################################
