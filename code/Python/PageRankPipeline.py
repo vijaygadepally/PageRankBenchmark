@@ -2,10 +2,13 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
+from scipy.sparse.linalg import eigs
 import time
 from numpy import linalg as la
 #Use the pandas package if available
 #import pandas as pd
+
+import scipy.io as sio
 
 
 ###################################################
@@ -194,17 +197,27 @@ def PageRankPipeline (SCALE, EdgesPerVertex, Nfile):
     print "Kernel 3: Compute PageRank."
     startTime=time.clock()
 
-    r=np.random.uniform(0,1,(Nmax,1))
+    r=np.transpose(np.random.uniform(0,1,(Nmax,1)))
     r=r/la.norm(r,1)
-    a=(np.ones((Nmax,1)) * (1-c))/Nmax
+    a= (1-c)/Nmax
 
+    #r = ((c .* r) *A) + ((1-c) .* sum(r,2))
     for i in xrange (0,Niter):
-        r = A*(r*c) + a
+        r = ( (c*r) * A ) + (a * r.sum(axis=1))
+    
+    r=r/la.norm(np.transpose(r),1)
 
     K3time=time.clock()-startTime
-    print "Pagerank Sum= " + str(r.sum(axis=0))
+    print "Pagerank Sum= " + str(r.sum(axis=1))
     print "K3time " + str(K3time) + ", Edges/sec: " + str( Niter*M/K3time )
 
+    #Check correctness
+    #Check with eigenvector.
+    #MATLAB output: sio.savemat('A.mat', {'vecs':vecs})
+    #vals, vecs=eigs(c*np.transpose(A.todense()) + (1-c)/Nmax,k=1)
+    #vecs=vecs/la.norm(vecs,1)
+    #print np.max(abs(np.transpose(vecs)-r))
+    
     return K0time, K1time, K2time, K3time;
 
 
