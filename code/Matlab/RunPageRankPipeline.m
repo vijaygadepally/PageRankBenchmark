@@ -16,7 +16,21 @@ end
 % Compute the rate.
 Krate = bsxfun(@rdivide,M,Ktime);
 Krate(4,:) = Niter .* Krate(4,:);
+Kout = [SCALE; Krate];
+
+fid=fopen('matlabOutput.tsv','w');
+fprintf(fid,'%s\t%s\t%s\t%s\t%s\n', 'SCALE', 'K0time', 'K1time', 'K2time', 'K3time');
+fclose(fid);
+dlmwrite('matlabOutput.tsv', Kout.','delimiter', char(9), '-append');
 
 figure;
 loglog(M,Krate);  xlabel('number of edges');  ylabel('edges/second');
 legend('K0 Generate','K1 Sort','K2 Filter','K3 PageRank','Location','NorthEastOutside');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PageRank Pipeline Benchmark
+% Architect: Dr. Jeremy Kepner (kepner@ll.mit.edu)
+% MIT
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% (c) <2015> Jeremy Kepner
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

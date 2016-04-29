@@ -1,4 +1,5 @@
 /* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
+/* Pagerank Pipeline Benchmark in C++                          */
 /* Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu         */
 
 #include "pagerankpipeline.hh"
