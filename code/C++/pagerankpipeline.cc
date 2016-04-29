@@ -316,7 +316,7 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csc_matrix<T> &M
       for (T vi = start_col; vi < end_col; vi++) {
         dotsum += c * r[M.rows[vi]] * M.vals[vi];
       }
-      r2[i] = sum  + a * sum;
+      r2[i] = dotsum  + a * sum;
 
 #if 0
       // In matlab, this is:   r =  M * (R .* c) + a;
