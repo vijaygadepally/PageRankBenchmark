@@ -140,15 +140,21 @@ void kernel1(const int SCALE, const int edges_per_vertex, const int n_files) {
   }
 }
 
+// This is a compressed sparse column (CSC or CCS) matrix.
+//  * vals is all the nonzeros stored in column-major order.
+//  * rows is a vector of the same length as vals that gives the row
+//    index for each value.
+//  * col-starts tells us the index in vals where each column starts.
+// A CSC matrix is useful when performing a matrix*vector product.
 template <class T>
-struct csr_matrix {
-  std::vector<T> row_starts;
-  std::vector<T> cols;
+struct csc_matrix {
+  std::vector<T> col_starts;
+  std::vector<T> rows;
   std::vector<double> vals;
 };
 
 template <class T>
-void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr_matrix<T> *result) {
+void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csc_matrix<T> *result) {
   fasttime_t start = gettime();
   const size_t N = (1ul<<SCALE);
   std::vector<std::tuple<T, T>> edges;
@@ -200,7 +206,7 @@ void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr
       if (col_counts[i] != 0) col_inverses[i] = 1/(double)(col_counts[i]);
     }
 
-    // Untranpose the matrix and remove the supernode and leaves.
+    // Untranspose the matrix and remove the supernode and leaves.
     size_t new_size = 0;
     for (const auto &e : matrix) {
       const T &col = std::get<0>(e);
@@ -214,51 +220,33 @@ void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr
     matrix.shrink_to_fit();
   }
 
-  // Put it in row-major order.
-  std::sort(matrix.begin(), matrix.end());
-  if (0) {
-    for (const auto &e : matrix) {
-      printf(" (%d %d %f)", std::get<0>(e), std::get<1>(e), std::get<2>(e));
-    }
-    printf("\n");
-  }
+  // Don't put it into row-major order, since we want to put the matrix into CSC format, column-major sort order is good.
 
   // Construct the csr matrix.
-  auto &row_starts = result->row_starts;
-  auto &cols       = result->cols;
+  auto &col_starts = result->col_starts;
+  auto &rows       = result->rows;
   auto &vals       = result->vals;
-  row_starts.reserve(N + 1);
-  cols.reserve(matrix.size());
+  col_starts.reserve(N + 1);
+  rows.reserve(matrix.size());
   vals.reserve(matrix.size());
   for (const auto & e : matrix) {
     const T &row = std::get<0>(e);
     const T &col = std::get<1>(e);
     const double &val = std::get<2>(e);
-    while (row_starts.size() <= static_cast<size_t>(row)) {
-      row_starts.push_back(cols.size());
+    while (col_starts.size() <= static_cast<size_t>(col)) {
+      col_starts.push_back(rows.size());
     }
-    cols.push_back(col);
+    rows.push_back(row);
     vals.push_back(val);
   }
-  while (row_starts.size() < N+1) {
-    row_starts.push_back(cols.size());
-  }
-  if (0)
-  for (size_t row = 0; row < N; row++) {
-    double sum = 0;
-    for (size_t i = row_starts[row]; i < row_starts[row+1]; i++) {
-      sum += vals[i];
-    }
-    double inv = 1/sum;
-    for (size_t i = row_starts[row]; i < row_starts[row+1]; i++) {
-      vals[i] *= inv;
-    }
+  while (col_starts.size() < N+1) {
+    col_starts.push_back(rows.size());
   }
   if (0) {
-    printf("row_starts:");
-    for (auto &rs : row_starts) { printf(" %d", rs); }
+    printf("col_starts:");
+    for (auto &cs : col_starts) { printf(" %d", cs); }
     printf("\ncols: ");
-    for (auto &cs : cols) { printf(" %4d", cs); }
+    for (auto &rs : rows) { printf(" %4d", rs); }
     printf("\nvals: ");
     for (auto &vs : vals) { printf(" %3.3f", vs); }
     printf("\n");
@@ -275,17 +263,22 @@ void kernel2(const int SCALE, const int edges_per_vertex, const int n_files, csr
 }
 
 template <class T>
-void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M) {
+void kernel3(const int SCALE, const int edges_per_vertex, const csc_matrix<T> &M) {
 
   const size_t N = (1ul<<SCALE);
   std::vector<double> r;
   r.reserve(N);
-  uint64_t sum = 0;
+  uint64_t sum = 0; // this will compute norm(r, 1), also written in matab as sum(r,2)
+
+  // Generate a random starting rank.  This corresponds to matlab's
+  //       r = rand(1, N)
   for (size_t i = 0; i < N; i++) {
     long rval = random();
     r.push_back((double)rval);  
     sum += rval;
   }
+
+  // Normalize.  This corresponds to matlab's r = r ./ norm(r,1)
   double one_over_sum = 1/(double)sum;
   double fsum=0;
   for (auto &e : r) {
@@ -304,11 +297,29 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
   // Now do the page rank.
   int page_rank_iteration_count = 20;
   double c = 0.85;
-  double one_minus_c_over_N = (1-c)/(double)N;
+
+  // In matlab, a is a vector of these values, but we need represent
+  //   the value of a only once.
+  double a = (1-c)/(double)N;
+
+  // In matlab we write r = ((c .* r) * M) + (a .* sum(r,2))
+  // In C++, we create a second vector r2, and std::swap r2 with r at
+  //  the end.
   std::vector<double> r2(N, 0);
   fasttime_t start = gettime();
   for (int pr_count = 0; pr_count < page_rank_iteration_count; pr_count++) {
     for (size_t i = 0; i < N; i++) {
+      // In matlab, this is    r = ((c .* r) * M) + (a .* sum(r,2))
+      double dotsum = 0;
+      const T start_col = M.col_starts[i];
+      const T end_col   = M.col_starts[i+1];
+      for (T vi = start_col; vi < end_col; vi++) {
+        dotsum += c * r[M.rows[vi]] * M.vals[vi];
+      }
+      r2[i] = sum  + a * sum;
+
+#if 0
+      // In matlab, this is:   r =  M * (R .* c) + a;
       double sum = 0;
       //printf("Row %ld\n", i);
       const T start_row = M.row_starts[i];
@@ -318,10 +329,11 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
         sum += M.vals[vi] * r[M.cols[vi]];
       }
       if (1) {
-        r2[i] = sum * c + one_minus_c_over_N;
+        r2[i] = sum * c + a;
       } else {
         r2[i] = sum;
       }
+#endif
     }
     std::swap(r, r2);
     if (0) {
@@ -333,7 +345,7 @@ void kernel3(const int SCALE, const int edges_per_vertex, const csr_matrix<T> &M
     }
   }
   fasttime_t end   = gettime();
-  printf("scale=%2d Edgefactor=%2d K3time: %9.3fs Medges/sec: %7.2f  MLFLOPS: %7.2f\n", 
+  printf("scale=%2d Edgefactor=%2d K3time: %9.3fs Medges/sec: %7.2f  MFLOPS: %7.2f\n", 
          SCALE, edges_per_vertex, 
          end-start,
          1e-6 * (1ul<<SCALE)*edges_per_vertex*page_rank_iteration_count / (end-start),
@@ -347,7 +359,7 @@ template <class T>
 void pagerankpipeline(int SCALE, int edges_per_vertex, int n_files) {
   kernel0<T>(SCALE, edges_per_vertex, n_files);
   kernel1<T>(SCALE, edges_per_vertex, n_files);
-  csr_matrix<T> M;
+  csc_matrix<T> M;
   kernel2<T>(SCALE, edges_per_vertex, n_files, &M);
   kernel3<T>(SCALE, edges_per_vertex,           M);
 }
