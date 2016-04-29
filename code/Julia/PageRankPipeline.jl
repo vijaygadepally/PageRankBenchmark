@@ -130,13 +130,15 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
   println("Kernel 3: PageRank");
   tic();
 
-    r = rand(Nmax,1);                     # Generate a random starting rank.
+    r = rand(1,Nmax);                     # Generate a random starting rank.
     r = r ./ norm(r,1);                   # Normalize
-    a = ones(Nmax,1) .* (1-c) ./ Nmax;    # Create damping vector
+    a = (1-c) ./ Nmax;                    # Create damping vector
 
     for i=1:Niter
-      r = A * (r .* c) + a;               # Compute PageRank.
+      r = ((c .* r) * A) + (a .* sum(r,2));                # Compute PageRank.
     end
+
+    r=r./norm(r,1);
 
   K3time = toq();
   println("  Sum of PageRank: " * string(sum(r)) );     # Force all computations to occur.
