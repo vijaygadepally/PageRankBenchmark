@@ -39,7 +39,7 @@ static unsigned int parse_uint(const char *str) {
   return v;
 }
 
-int main(int argc, char *argv[] __attribute__((unused))) {
+int main(int argc, char *argv[]) {
   progname = argv[0];
   const int min_scale = (argc >= 2) ? parse_uint(argv[1]) : min_scale_default;
   const int max_scale = (argc >= 3) ? parse_uint(argv[2]) : max_scale_default;
