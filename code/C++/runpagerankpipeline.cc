@@ -1,4 +1,3 @@
-/* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
 /* Pagerank Pipeline Benchmark in C++                          */
 /* Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu         */
 
@@ -57,3 +56,9 @@ int main(int argc, char *argv[]) {
   data_file = NULL;
   return 0;
 }
+
+// Local Variables:
+// mode: C++
+// c-basic-offset: 2
+// indent-tabs-mode: nil
+// End:

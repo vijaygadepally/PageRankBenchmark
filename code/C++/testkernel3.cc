@@ -1,4 +1,5 @@
-/* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
+/* Pagerank Pipeline Benchmark in C++                          */
+/* Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu         */
 
 #include "csc.hh"
 #include "pagerankpipeline.hh"
@@ -6,6 +7,8 @@
 #include <cmath>
 
 int main () {
+  // Run an example on kernel 3.  This example was computed using the
+  // Octave version on 4/1/2016.
   typedef std::tuple<uint32_t, uint32_t, double> triple;
   std::vector<triple> tuples = {
     triple(1-1, 2-1, 0.30000),
@@ -59,3 +62,9 @@ int main () {
   //printf("}\n");
   return 0;
 }
+
+// Local Variables:
+// mode: C++
+// c-basic-offset: 2
+// indent-tabs-mode: nil
+// End:

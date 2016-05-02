@@ -1,4 +1,3 @@
-/* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
 /* Pagerank Pipeline Benchmark in C++                          */
 /* Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu         */
 
@@ -359,3 +358,9 @@ void pagerankpipeline(int SCALE, int edges_per_vertex, int n_files) {
 
 template void pagerankpipeline<uint32_t>(int SCALE, int edges_per_vertex, int n_files);
 template std::vector<double> kernel3_compute<uint32_t>(int, csc_matrix<uint32_t> const&, std::vector<double> *);
+
+// Local Variables:
+// mode: C++
+// c-basic-offset: 2
+// indent-tabs-mode: nil
+// End:

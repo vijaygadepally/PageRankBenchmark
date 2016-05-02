@@ -1,4 +1,3 @@
-/* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
 /* Pagerank Pipeline Benchmark in C++                          */
 /* Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu         */
 
@@ -20,5 +19,11 @@ std::vector<std::tuple<T, T>> kronecker(int SCALE, int edges_per_vertex, bool ra
 void write_kronecker(const std::string &filename, int SCALE, int edges_per_verte);
 // Effect: Write an edgelist to a file.  For this we don't have the randomize option (we never randomize).
 //  Edges are written as tab-separated integers followed by a newline.
+
+// Local Variables:
+// mode: C++
+// c-basic-offset: 2
+// indent-tabs-mode: nil
+// End:
 
 #endif

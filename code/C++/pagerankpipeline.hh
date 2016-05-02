@@ -1,4 +1,3 @@
-/* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
 /* Pagerank Pipeline Benchmark in C++                          */
 /* Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu         */
 
@@ -20,5 +19,11 @@ std::vector<double> kernel3_compute(const int SCALE,
                                     const csc_matrix<T> &M,
                                     // for testing we use a known r.
                                     std::vector<double> *initial_r = nullptr);
+
+// Local Variables:
+// mode: C++
+// c-basic-offset: 2
+// indent-tabs-mode: nil
+// End:
 
 #endif
