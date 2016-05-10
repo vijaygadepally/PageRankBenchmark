@@ -1,4 +1,4 @@
-/* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
+/* Pagerank Pipeline Benchmark in C++                          */
 /* Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu         */
 
 #ifndef FASTTIME_H
@@ -73,5 +73,11 @@ static inline double operator- (const fasttime_t &end, const fasttime_t &start) 
     return tdiff(start, end);
 }
 #endif
+
+// Local Variables:
+// mode: C++
+// c-basic-offset: 2
+// indent-tabs-mode: nil
+// End:
 
 #endif //FASTTIME_H

@@ -1,4 +1,4 @@
-/* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
+/* Pagerank Pipeline Benchmark in C++                          */
 /* Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu         */
 
 #include "pagerankpipeline.hh"
@@ -38,7 +38,7 @@ static unsigned int parse_uint(const char *str) {
   return v;
 }
 
-int main(int argc, char *argv[] __attribute__((unused))) {
+int main(int argc, char *argv[]) {
   progname = argv[0];
   const int min_scale = (argc >= 2) ? parse_uint(argv[1]) : min_scale_default;
   const int max_scale = (argc >= 3) ? parse_uint(argv[2]) : max_scale_default;
@@ -56,3 +56,9 @@ int main(int argc, char *argv[] __attribute__((unused))) {
   data_file = NULL;
   return 0;
 }
+
+// Local Variables:
+// mode: C++
+// c-basic-offset: 2
+// indent-tabs-mode: nil
+// End:

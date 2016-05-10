@@ -1,4 +1,4 @@
-/* -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*- */
+/* Pagerank Pipeline Benchmark in C++                          */
 /* Copyright 2015 Bradley C. Kuszmaul, bradley@mit.edu         */
 
 #include "krongraph500.hh"
@@ -130,4 +130,8 @@ void write_kronecker(const std::string &filename, int SCALE, int edges_per_verte
   delete [] buf;
 }
 
-
+// Local Variables:
+// mode: C++
+// c-basic-offset: 2
+// indent-tabs-mode: nil
+// End:
