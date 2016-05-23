@@ -9,7 +9,7 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
   M = EdgesPerVertex .* Nmax;                # Total number of edges.
   myFiles = collect(1:Nfile).';              # Set list of files.
   #
-  # Julia parallel verison 
+  # Julia parallel verison
   # Figure it out later: how to distribute the load
   # myFiles = global_ind(zeros(Nfile,1,map([Np 1],{},0:Np-1)));   # PARALLEL.
   tab = Char(9);
@@ -31,7 +31,7 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       println("  Writing: " * fname);                          # Read filename.
       srand(i);                                                # Set random seed to be unique for this file.
       u, v = KronGraph500NoPerm(SCALE,EdgesPerVertex./Nfile);  # Generate data.
-	  
+
       edgeStr = string(round(Int64,[u'; v']'));                        # Convert edges to strings in (u,v) pairs
       edgeStr = replace(edgeStr,r"\[|\]|\n","");               # Remove extra chars ([, ], \n).
       StrFileWrite(edgeStr,fname);                             # Write string to file.
@@ -64,7 +64,7 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
     sortIndex = sortperm(vec(u));                      # Sort starting vertices.
     u = u[sortIndex];                                  # Get starting vertices.
     v = v[sortIndex];                                  # Get ending vertices.
-  
+
   K1time1 = toq();
   tic();
     # Write all the data to files.
@@ -76,7 +76,7 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       vv = v[jEdgeStart:jEdgeEnd];                                 # Select end vertices.
       fname = "data/K1/" * string(i) * ".tsv";
       println("  Writing: " * fname);                              # Create filename.
-	  
+
       edgeStr = string(round(Int64,[uu'; vv']'));                  # Convert edges to strings in (u,v) pairs
       edgeStr = replace(edgeStr,r"\[|\]|\n","");                   # Remove extra chars ([, ], \n).
       StrFileWrite(edgeStr,fname);                                   # uu,vv: row vector
@@ -135,7 +135,7 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
     a = (1-c) ./ Nmax;                    # Create damping vector
 
     for i=1:Niter
-      r = ((c .* r) * A) + (a .* sum(r,2));                # Compute PageRank.
+        r = ((c .* r) * A) .+ (a .* sum(r,2));                # Compute PageRank.
     end
 
     r=r./norm(r,1);
@@ -156,5 +156,3 @@ end
 ########################################################
 # (c) <2015> Massachusetts Institute of Technology
 ########################################################
-
-
