@@ -9,7 +9,7 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
   M = EdgesPerVertex .* Nmax;                # Total number of edges.
   myFiles = collect(1:Nfile).';              # Set list of files.
   #
-  # Julia parallel verison
+  # Julia parallel version
   # Figure it out later: how to distribute the load
   # myFiles = global_ind(zeros(Nfile,1,map([Np 1],{},0:Np-1)));   # PARALLEL.
   tab = Char(9);
