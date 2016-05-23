@@ -135,7 +135,9 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
     a = (1-c) ./ Nmax;                    # Create damping vector
 
     for i=1:Niter
-        r = (c .* (r * A)) .+ (a .* sum(r,2));                # Compute PageRank.
+        s = r * A
+        scale!(s, c)
+        r = s .+ (a * sum(r,2));                # Compute PageRank.
     end
 
     r=r./norm(r,1);
