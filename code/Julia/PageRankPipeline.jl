@@ -12,10 +12,10 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
   # Julia parallel version
   # Figure it out later: how to distribute the load
   # myFiles = global_ind(zeros(Nfile,1,map([Np 1],{},0:Np-1)));   # PARALLEL.
-  tab = Char(9);
-  nl = Char(10);
-  Niter = 20;                                      # Number of PageRank iterations.
-  c = 0.15;                                        # PageRank damping factor.
+  tab = Char(9)
+  nl = Char(10)
+  Niter = 20                                      # Number of PageRank iterations.
+  c = 0.15                                        # PageRank damping factor.
 
   println("Number of Edges: " * string(M) * ", Maximum Possible Vertex: " * string(Nmax));
 
@@ -25,19 +25,28 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
   ########################################################
   println("Kernel 0: Generate Graph, Write Edges");
   tic();
-
     for i in myFiles
       fname = "data/K0/" * string(i) * ".tsv";
       println("  Writing: " * fname);                          # Read filename.
       srand(i);                                                # Set random seed to be unique for this file.
       u, v = KronGraph500NoPerm(SCALE,EdgesPerVertex./Nfile);  # Generate data.
 
-      edgeStr = string(round(Int64,[u'; v']'));                        # Convert edges to strings in (u,v) pairs
-      edgeStr = replace(edgeStr,r"\[|\]|\n","");               # Remove extra chars ([, ], \n).
-      StrFileWrite(edgeStr,fname);                             # Write string to file.
+      n = length(u)
+      f = IOBuffer()#20n)
+      for j in 1:n-1
+           write(f, string(u[j]))
+           write(f, ' ')
+           write(f, string(v[j]))
+           write(f, ' ')
+      end
+      write(f, string(u[n]))
+      write(f, ' ')
+      write(f, string(v[n]))
 
+      open(fname, "w") do g
+          write(g, takebuf_string(f))
+      end
     end
-
   K0time = toq();
   println("K0 Time: " * string(K0time) * ", Edges/sec: " * string(M./K0time));
 

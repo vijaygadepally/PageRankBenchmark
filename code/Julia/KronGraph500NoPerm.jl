@@ -1,6 +1,6 @@
 function KronGraph500NoPerm(SCALE,EdgesPerVertex)
 #
-#Graph500NoPerm: Generates graph edges using the same 2x2 Kronecker algorithm (R-MAT) as the Graph500 benchmark, 
+#Graph500NoPerm: Generates graph edges using the same 2x2 Kronecker algorithm (R-MAT) as the Graph500 benchmark,
 #                but no permutation of vertex labels is performed.
 #IO user function.
 #  Usage:
@@ -11,28 +11,34 @@ function KronGraph500NoPerm(SCALE,EdgesPerVertex)
 # Outputs:
 #    StartVertex = Mx1 vector of integer start vertices in the range [1,N]
 #    EndVertex = Mx1 vector of integer end vertices in the range [1,N]
-  
-  N = 2.^SCALE;                       # Set  power of number of vertices..
 
-  M = round(Int, EdgesPerVertex .* N);     # Compute total number of edges to generate.
+  N = 2.^SCALE                       # Set  power of number of vertices..
 
-  A = 0.57; B = 0.19;  C = 0.19;   D = 1-(A+B+C);  # Set R-MAT (2x2 Kronecker) coefficeints.
- 
-  ij = ones(2, M);            # Initialize index arrays.
-  ab = A + B;                 # Normalize coefficients.
-  c_norm = C/(1 - (A + B));
-  a_norm = A/(A + B);
+  M = round(Int, EdgesPerVertex .* N)     # Compute total number of edges to generate.
 
-  for ib = 1:SCALE            # Loop over each scale.
-    ii_bit = falses(1,M);
-    setindex!(ii_bit,true,find(rand(1, M) .> ab));
-    jj_bit = falses(1,M);
-    setindex!(jj_bit,true,find(rand(1, M) .> ( c_norm * ii_bit + a_norm * !(ii_bit) )) );
-    ij = ij + 2^(ib-1) * [ii_bit; jj_bit];
+  A = 0.57; B = 0.19;  C = 0.19;   D = 1-(A+B+C)  # Set R-MAT (2x2 Kronecker) coefficients.
+
+  ij = ones(Int, 2, M)         # Initialize index arrays.
+  ab = A + B                 # Normalize coefficients.
+  c_norm = C/(1 - (A + B))
+  a_norm = A/(A + B)
+
+  for j = 1:M
+      for ib = 1:SCALE            # Loop over each scale.
+          k = 1 << (ib-1)
+          if rand() > ab
+              ij[1,j] += k
+              if rand() > c_norm
+                  ij[2,j] += k
+              end
+          elseif rand() > a_norm
+              ij[2,j] += k
+          end
+      end
   end
 
-  StartVertex = ij[1,:];     # Copy to output. (row vector)
-  EndVertex = ij[2,:];       # Copy to output. (row vector)
+  StartVertex = sub(ij,1,:)     # Copy to output. (row vector)
+  EndVertex =   sub(ij,2,:)       # Copy to output. (row vector)
 
-  return StartVertex,EndVertex;
+  return StartVertex,EndVertex
 end
