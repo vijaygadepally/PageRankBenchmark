@@ -31,21 +31,7 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       srand(i);                                                # Set random seed to be unique for this file.
       u, v = KronGraph500NoPerm(SCALE,EdgesPerVertex./Nfile);  # Generate data.
 
-      n = length(u)
-      f = IOBuffer()#20n)
-      for j in 1:n-1
-           write(f, string(u[j]))
-           write(f, ' ')
-           write(f, string(v[j]))
-           write(f, ' ')
-      end
-      write(f, string(u[n]))
-      write(f, ' ')
-      write(f, string(v[n]))
-
-      open(fname, "w") do g
-          write(g, takebuf_string(f))
-      end
+      writeuv(fname, u, v)
     end
   K0time = toq();
   println("K0 Time: " * string(K0time) * ", Edges/sec: " * string(M./K0time));
@@ -66,13 +52,14 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       if i == 1
          u = ut; v = vt;
       else
-         u = hcat(u,ut); v = hcat(v,vt);
+         append!(u, ut)
+         append!(v, vt)
       end
     end
 
-    sortIndex = sortperm(vec(u));                      # Sort starting vertices.
-    u = u[sortIndex];                                  # Get starting vertices.
-    v = v[sortIndex];                                  # Get ending vertices.
+    sortIndex = sortperm(u)                      # Sort starting vertices.
+    u = u[sortIndex]                                  # Get starting vertices.
+    v = v[sortIndex]                                  # Get ending vertices.
 
   K1time1 = toq();
   tic();
@@ -81,14 +68,13 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
     for i in myFiles
       jEdgeStart = round(Int64,((j-1).*(size(u,1)./length(myFiles))+1));        # Compute first edge of file.
       jEdgeEnd = round(Int64,((j).*(size(u,1)./length(myFiles))));              # Compute last edge of file.
-      uu = u[jEdgeStart:jEdgeEnd];                                 # Select start vertices.
-      vv = v[jEdgeStart:jEdgeEnd];                                 # Select end vertices.
+      uu = sub(u,jEdgeStart:jEdgeEnd)                                 # Select start vertices.
+      vv = sub(v,jEdgeStart:jEdgeEnd)                                 # Select end vertices.
       fname = "data/K1/" * string(i) * ".tsv";
       println("  Writing: " * fname);                              # Create filename.
 
-      edgeStr = string(round(Int64,[uu'; vv']'));                  # Convert edges to strings in (u,v) pairs
-      edgeStr = replace(edgeStr,r"\[|\]|\n","");                   # Remove extra chars ([, ], \n).
-      StrFileWrite(edgeStr,fname);                                   # uu,vv: row vector
+      writeuv(fname, uu, vv)
+
       j = j + 1;                                                   # Increment file counter.
     end
 
