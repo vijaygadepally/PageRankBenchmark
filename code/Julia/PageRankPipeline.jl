@@ -99,7 +99,9 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       if i == 1
          u = ut; v = vt;                             # Initialize starting and ending vertices.
       else
-         u = hcat(u,ut); v = hcat(v,vt);             # Get the rest of starting and ending vertices.
+         append!(u, ut)
+         append!(v, vt)
+         # Get the rest of starting and ending vertices.
       end
     end
 
