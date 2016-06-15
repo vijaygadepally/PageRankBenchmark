@@ -91,7 +91,6 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
   ########################################################
   println("Kernel 2: Read, Filter Edges");
   tic();
-
     # Read in all the files into one array.
     for i in myFiles
       fname = "data/K1/" * string(i) * ".tsv";
@@ -105,17 +104,17 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
     end
 
     # Construct adjacency matrix.
-    A = sparse(round(Int64,vec(u)),round(Int64,vec(v)),1,Nmax,Nmax); # Create adjacency matrix.
+    A = sparse(vec(u),vec(v),1.0,Nmax,Nmax)      # Create adjacency matrix.
 
     # Filter and weight the adjacency matrix.
-    din = sum(A,1);                              # Compute in degree.
-    setindex!(A,0,find(din == maximum(din)))     # Eliminate the super-node.
-    setindex!(A,0,find(din == 1))                # Eliminate the leaf-node.
-    dout = sum(A,2);                             # Compute the out degree.
-    i = find(dout);                              # Find vertices with outgoing edges (dout > 0).
-    DoutInv = sparse(i,i,1./dout[i],Nmax,Nmax);  # Create diagonal weight matrix.
-    A = DoutInv * A;                             # Apply weight matrix.
-
+    din = sum(A,1)                               # Compute in degree.
+    A[find(din == maximum(din))]=0               # Eliminate the super-node.
+    A[find(din == 1)]=0                          # Eliminate the leaf-node.
+    dout = sum(A,2)                              # Compute the out degree.
+    i = find(dout)                               # Find vertices with outgoing edges (dout > 0).
+    DoutInvD = zeros(Nmax)        # Create diagonal weight matrix.
+    DoutInvD[i] = 1./dout[i]
+    scale!(DoutInvD, A)           # Apply weight matrix.
   K2time = toq();
   println("K2 Time: " * string(K2time) * ", Edges/sec: " * string(M./K2time));
 
