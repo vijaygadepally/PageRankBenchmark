@@ -65,17 +65,18 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
   tic();
     # Write all the data to files.
     j = 1;                                                         # Initialize file counter.
+    c = size(u,1)/length(myFiles)        # Compute first edge of file.
     for i in myFiles
-      jEdgeStart = round(Int64,((j-1).*(size(u,1)./length(myFiles))+1));        # Compute first edge of file.
-      jEdgeEnd = round(Int64,((j).*(size(u,1)./length(myFiles))));              # Compute last edge of file.
+      jEdgeStart = round(Int, (j-1)*c+1)# Compute first edge of file.
+      jEdgeEnd = round(Int, j*c)          # Compute last edge of file.
       uu = sub(u,jEdgeStart:jEdgeEnd)                                 # Select start vertices.
       vv = sub(v,jEdgeStart:jEdgeEnd)                                 # Select end vertices.
-      fname = "data/K1/" * string(i) * ".tsv";
-      println("  Writing: " * fname);                              # Create filename.
+      fname = "data/K1/" * string(i) * ".tsv"
+      println("  Writing: " * fname)                              # Create filename.
 
       writeuv(fname, uu, vv)
 
-      j = j + 1;                                                   # Increment file counter.
+      j = j + 1                                                   # Increment file counter.
     end
 
   K1time2 = toq();
