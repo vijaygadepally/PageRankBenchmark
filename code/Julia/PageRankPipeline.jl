@@ -29,9 +29,9 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
       fname = "data/K0/" * string(i) * ".tsv";
       println("  Writing: " * fname);                          # Read filename.
       srand(i);                                                # Set random seed to be unique for this file.
-      u, v = KronGraph500NoPerm(SCALE,EdgesPerVertex./Nfile);  # Generate data.
+      ut, vt = KronGraph500NoPerm(SCALE,EdgesPerVertex./Nfile);  # Generate data.
 
-      writeuv(fname, u, v)
+      writeuv(fname, ut, vt)
     end
   K0time = toq();
   println("K0 Time: " * string(K0time) * ", Edges/sec: " * string(M./K0time));
@@ -113,9 +113,9 @@ function PageRankPipeline(SCALE,EdgesPerVertex,Nfile);
     A[find(din == maximum(din))]=0               # Eliminate the super-node.
     A[find(din == 1)]=0                          # Eliminate the leaf-node.
     dout = sum(A,2)                              # Compute the out degree.
-    i = find(dout)                               # Find vertices with outgoing edges (dout > 0).
+    is = find(dout)                               # Find vertices with outgoing edges (dout > 0).
     DoutInvD = zeros(Nmax)        # Create diagonal weight matrix.
-    DoutInvD[i] = 1./dout[i]
+    DoutInvD[is] = 1./dout[is]
     scale!(DoutInvD, A)           # Apply weight matrix.
   K2time = toq();
   println("K2 Time: " * string(K2time) * ", Edges/sec: " * string(M./K2time));
